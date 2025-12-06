@@ -1,31 +1,24 @@
 module Database.PostgreSQL.Bijou where
 
+import           Data.Aeson.Types
+import           Data.Int
+import           Data.Text                            as T
+import           Database.PostgreSQL.Bijou.Statements
+import qualified Hasql.Connection                     as C
+import qualified Hasql.Session                        as S
+import Database.PostgreSQL.Bijou.Types
 -- https://github.com/pgmq/pgmq/blob/main/docs/api/sql/functions.md
-import Hasql.Session -- (Session)
-import qualified Hasql.Connection as C
-import qualified Hasql.Connection.Setting as S
-import qualified Hasql.Connection.Setting.Connection as SC
-import Data.Text as T
-import Database.PostgreSQL.Bijou.Statements
--- import Data.Int
 
-conn :: SC.Connection
-conn = SC.string "postgres://postgres:pgmq@0.0.0.0:5432/postgres"
+create :: C.Connection -> T.Text -> IO (Either S.SessionError ())
+create c q = S.run (S.statement q createQueue) c
 
-create :: T.Text -> IO (Either SessionError ()) 
-create q = do
-  Right co <- C.acquire [(S.connection conn)]
-  run (statement q createQueue) co
-
-drop :: T.Text -> IO (Either SessionError Bool) 
-drop q = do
-  Right co <- C.acquire [(S.connection conn)]
-  run (statement q dropQueue) co
+drop :: C.Connection -> T.Text -> IO (Either S.SessionError Bool)
+drop c q = S.run (S.statement q dropQueue) c
 
 -- Sending Messages
 
-send :: a
-send = undefined
+send :: C.Connection -> T.Text -> Value -> IO (Either S.SessionError Int64)
+send c q o = S.run (S.statement (q,o) sendMessage) c
 
 sendBatch :: a
 sendBatch = undefined
@@ -35,8 +28,8 @@ sendBatch = undefined
 read :: a
 read = undefined
 
-read_with_poll :: a
-read_with_poll = undefined
+readWithPoll :: a
+readWithPoll = undefined
 
 pop :: a
 pop = undefined

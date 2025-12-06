@@ -25,12 +25,13 @@ library
     Database.PostgreSQL.Bijou
     Database.PostgreSQL.Bijou.Types
     Database.PostgreSQL.Bijou.Statements
+    Database.PostgreSQL.Bijou.Connection
 
   -- other-modules:
   default-extensions: OverloadedStrings
   build-depends:
     , aeson     >=2.2.3     && <2.4
-    , base      ^>=4.21.0.0
+    , base      ^>=4.19.2.0
     , hasql     >=1.4       && <1.10
     , hasql-th  >=0.4       && <0.5
     , text      >=1.2.3     && <2.2
