@@ -1,0 +1,39 @@
+cabal-version:   3.0
+name:            Bijou
+version:         0.1.0.0
+synopsis:        A PGMQ client
+
+-- description:
+homepage:        https://github.com/MichelBoucey/Bijou
+license:         BSD-3-Clause
+license-file:    LICENSE
+author:          Michel Boucey
+maintainer:      michel.boucey@gmail.com
+copyright:       (c) 2026 - Michel Boucey
+category:        Database, PostgreSQL
+build-type:      Simple
+extra-doc-files: CHANGELOG.md
+
+-- extra-source-files:
+
+common warnings
+  ghc-options: -Wall
+
+library
+  import:           warnings
+  exposed-modules:
+    Database.PostgreSQL.Bijou
+    Database.PostgreSQL.Bijou.Types
+    Database.PostgreSQL.Bijou.Statements
+
+  -- other-modules:
+  default-extensions: OverloadedStrings
+  build-depends:
+    , aeson     >=2.2.3     && <2.4
+    , base      ^>=4.21.0.0
+    , hasql     >=1.4       && <1.10
+    , hasql-th  >=0.4       && <0.5
+    , text      >=1.2.3     && <2.2
+
+  hs-source-dirs:   src
+  default-language: Haskell2010
