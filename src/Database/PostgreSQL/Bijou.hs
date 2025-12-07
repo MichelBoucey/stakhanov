@@ -17,8 +17,8 @@ drop c q = S.run (S.statement q dropQueue) c
 
 -- Sending Messages
 
-send :: C.Connection -> T.Text -> Value -> IO (Either S.SessionError Int64)
-send c q o = S.run (S.statement (q,o) sendMessage) c
+send :: C.Connection -> T.Text -> Object -> IO (Either S.SessionError Int64)
+send c q o = S.run (S.statement (q,Object o) sendMessage) c
 
 sendBatch :: a
 sendBatch = undefined
