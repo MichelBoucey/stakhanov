@@ -3,6 +3,7 @@ module Database.PostgreSQL.Bijou where
 import           Data.Aeson.Types
 import           Data.Int
 import           Data.Text                            as T
+import           Data.Vector
 import           Database.PostgreSQL.Bijou.Statements
 import           Database.PostgreSQL.Bijou.Types
 import qualified Hasql.Connection                     as C
@@ -26,11 +27,10 @@ sendBatch = undefined
 
 -- Reading Messages
 
-read :: a
+read :: C.Connection -> T.Text -> Int32 -> Int32 -> IO (Maybe (Vector Message))
 read = undefined
 
-readWithPoll :: a
-readWithPoll = undefined
+-- TODO : readWithPoll
 
 pop :: a
 pop = undefined
