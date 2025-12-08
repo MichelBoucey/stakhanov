@@ -4,9 +4,10 @@ import           Data.Aeson.Types
 import           Data.Int
 import           Data.Text                            as T
 import           Database.PostgreSQL.Bijou.Statements
+import           Database.PostgreSQL.Bijou.Types
 import qualified Hasql.Connection                     as C
 import qualified Hasql.Session                        as S
-import Database.PostgreSQL.Bijou.Types
+
 -- https://github.com/pgmq/pgmq/blob/main/docs/api/sql/functions.md
 
 create :: C.Connection -> T.Text -> IO (Either S.SessionError ())
