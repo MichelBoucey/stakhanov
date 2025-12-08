@@ -44,7 +44,7 @@ library
                     , QuasiQuotes
   build-depends:
     , aeson     >=2.2.3     && <2.4
-    , base      ^>=4.19.2.0
+    , base      >=4.8       && <5
     , hasql     >=1.4       && <1.10
     , hasql-th  >=0.4       && <0.5
     , text      >=1.2.3     && <2.2
