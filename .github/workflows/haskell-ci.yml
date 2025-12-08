@@ -54,31 +54,6 @@ jobs:
             compilerVersion: 9.6.7
             setup-method: ghcup
             allow-failure: false
-          - compiler: ghc-9.4.8
-            compilerKind: ghc
-            compilerVersion: 9.4.8
-            setup-method: ghcup
-            allow-failure: false
-          - compiler: ghc-9.2.8
-            compilerKind: ghc
-            compilerVersion: 9.2.8
-            setup-method: ghcup
-            allow-failure: false
-          - compiler: ghc-9.0.2
-            compilerKind: ghc
-            compilerVersion: 9.0.2
-            setup-method: ghcup
-            allow-failure: false
-          - compiler: ghc-8.10.7
-            compilerKind: ghc
-            compilerVersion: 8.10.7
-            setup-method: ghcup
-            allow-failure: false
-          - compiler: ghc-8.8.4
-            compilerKind: ghc
-            compilerVersion: 8.8.4
-            setup-method: ghcup
-            allow-failure: false
       fail-fast: false
     steps:
       - name: apt-get install
@@ -222,10 +197,10 @@ jobs:
           echo "packages: ${PKGDIR_Bijou}" >> cabal.project
           echo "package Bijou" >> cabal.project
           echo "    ghc-options: -Werror=missing-methods -Werror=missing-fields" >> cabal.project
-          if [ $((HCNUMVER >= 90400)) -ne 0 ] ; then echo "package Bijou" >> cabal.project ; fi
-          if [ $((HCNUMVER >= 90400)) -ne 0 ] ; then echo "    ghc-options: -Werror=unused-packages" >> cabal.project ; fi
-          if [ $((HCNUMVER >= 90000)) -ne 0 ] ; then echo "package Bijou" >> cabal.project ; fi
-          if [ $((HCNUMVER >= 90000)) -ne 0 ] ; then echo "    ghc-options: -Werror=incomplete-patterns -Werror=incomplete-uni-patterns" >> cabal.project ; fi
+          echo "package Bijou" >> cabal.project
+          echo "    ghc-options: -Werror=unused-packages" >> cabal.project
+          echo "package Bijou" >> cabal.project
+          echo "    ghc-options: -Werror=incomplete-patterns -Werror=incomplete-uni-patterns" >> cabal.project
           cat >> cabal.project <<EOF
           EOF
           if $HEADHACKAGE; then
