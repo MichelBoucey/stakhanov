@@ -1,4 +1,4 @@
-module Database.PostgreSQL.Bijou.Connection where
+module Database.PostgreSQL.Stakhanov.Connection where
 
 import           Hasql.Connection
 import           Hasql.Connection.Setting            (connection)

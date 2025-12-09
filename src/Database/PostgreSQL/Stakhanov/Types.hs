@@ -1,4 +1,4 @@
-module Database.PostgreSQL.Bijou.Types where
+module Database.PostgreSQL.Stakhanov.Types where
 
 import           Data.Aeson.Types
 import           Data.Int

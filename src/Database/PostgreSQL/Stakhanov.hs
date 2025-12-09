@@ -1,5 +1,5 @@
-module Database.PostgreSQL.Bijou
- ( conn --module Database.PostgreSQL.Bijou.Connection
+module Database.PostgreSQL.Stakhanov
+ ( conn --module Database.PostgreSQL.Stakhanov.Connection
 -- , create
 -- , drop
 -- , read
@@ -12,9 +12,9 @@ import           Data.Int
 import           Data.Text                            as T
 import           Data.Time
 import           Data.Vector                          hiding (create)
-import           Database.PostgreSQL.Bijou.Connection
-import           Database.PostgreSQL.Bijou.Statements
-import           Database.PostgreSQL.Bijou.Types
+import           Database.PostgreSQL.Stakhanov.Connection
+import           Database.PostgreSQL.Stakhanov.Statements
+import           Database.PostgreSQL.Stakhanov.Types
 import qualified Hasql.Connection                     as C
 import qualified Hasql.Session                        as S
 

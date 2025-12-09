@@ -1,9 +1,9 @@
 cabal-version:      3.0
-name:               Bijou
+name:               Stakhanov
 version:            0.1.0.0
 synopsis:           A PGMQ client
 description:        A fast Haskell PostgreSQL Message Queue client for busy workers
-homepage:           https://github.com/MichelBoucey/Bijou
+homepage:           https://github.com/MichelBoucey/Stakhanov
 license:            BSD-3-Clause
 license-file:       LICENSE
 author:             Michel Boucey
@@ -18,7 +18,7 @@ tested-with:
 
 source-repository head
   type:     git
-  location: https://github.com/MichelBoucey/Bijou.git
+  location: https://github.com/MichelBoucey/Stakhanov.git
 
 common warnings
   ghc-options: -Wall
@@ -26,10 +26,10 @@ common warnings
 library
   import:             warnings
   exposed-modules:
-    Database.PostgreSQL.Bijou
-    Database.PostgreSQL.Bijou.Connection
-    Database.PostgreSQL.Bijou.Statements
-    Database.PostgreSQL.Bijou.Types
+    Database.PostgreSQL.Stakhanov
+    Database.PostgreSQL.Stakhanov.Connection
+    Database.PostgreSQL.Stakhanov.Statements
+    Database.PostgreSQL.Stakhanov.Types
 
   default-extensions:
     OverloadedStrings

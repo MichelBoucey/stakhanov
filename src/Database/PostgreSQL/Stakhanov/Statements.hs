@@ -1,4 +1,4 @@
-module Database.PostgreSQL.Bijou.Statements where
+module Database.PostgreSQL.Stakhanov.Statements where
 
 import           Contravariant.Extras.Contrazip  (contrazip2,contrazip3)
 import           Data.Aeson
