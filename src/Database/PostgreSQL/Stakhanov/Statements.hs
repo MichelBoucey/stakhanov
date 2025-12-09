@@ -17,6 +17,9 @@ import qualified Hasql.TH                        as TH
 createQueue :: Statement T.Text ()
 createQueue = [TH.resultlessStatement|select from pgmq.create($1::text)|]
 
+dropQueue :: Statement T.Text Bool
+dropQueue = [TH.singletonStatement|select pgmq.drop_queue($1::text)::bool|]
+
 sendMessage :: Statement (T.Text,Value) Int64
 sendMessage =
   Statement sql encoder decoder True
@@ -28,22 +31,9 @@ sendMessage =
           (E.param (E.nonNullable E.jsonb))
       decoder = D.singleRow $ D.column $ D.nonNullable D.int8
 
-dropQueue :: Statement T.Text Bool
-dropQueue = [TH.singletonStatement|select pgmq.drop_queue($1::text)::bool|]
-
-{-
-SELECT * FROM pgmq.read(
-  queue_name => 'my_queue',
-  vt         => 30,
-  qty        => 1
-);
-
-data Message = Message { messageId :: Int64, readCount ::Int32, enqueuedAt :: UTCTime, visibilityTimeout :: UTCTime, jsonMessage :: !Object, jsonHeaders :: !Object }
-
--}
 readMessages :: Statement (T.Text,Int32,Int32) (Vector (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value))
 readMessages =
-  Statement sql encoder decoder True
+  Statement sql encoder messageDecoder True
     where
       sql = "select msg_id,read_ct,enqueued_at,vt,message,headers from pgmq.read($1,$2,$3)"
       encoder =
@@ -51,13 +41,21 @@ readMessages =
           (E.param (E.nonNullable E.text))
           (E.param (E.nonNullable E.int4))
           (E.param (E.nonNullable E.int4))
-      decoder =
-        D.rowVector $
-          (,,,,,) <$>
-            D.column (D.nonNullable D.int8) <*>
-            D.column (D.nonNullable D.int4) <*>
-            D.column (D.nonNullable D.timestamptz) <*>
-            D.column (D.nonNullable D.timestamptz) <*>
-            D.column (D.nonNullable D.jsonb) <*>
-            D.column (D.nullable D.jsonb)
+
+archiveMessage :: Statement (T.Text,Int64) Bool
+archiveMessage = [TH.singletonStatement|select pgmq.archive($1::text,$2::int8)::bool|]
+
+deleteMessage :: Statement (T.Text,Int64) Bool
+deleteMessage = [TH.singletonStatement|select pgmq.delete($1::text,$2::int8)::bool|]
+
+messageDecoder :: D.Result (Vector (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value))
+messageDecoder =
+  D.rowVector $
+    (,,,,,) <$>
+      D.column (D.nonNullable D.int8) <*>
+      D.column (D.nonNullable D.int4) <*>
+      D.column (D.nonNullable D.timestamptz) <*>
+      D.column (D.nonNullable D.timestamptz) <*>
+      D.column (D.nonNullable D.jsonb) <*>
+      D.column (D.nullable D.jsonb)
 

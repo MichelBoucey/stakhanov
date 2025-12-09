@@ -34,6 +34,7 @@ library
   default-extensions:
     OverloadedStrings
     QuasiQuotes
+    RecordWildCards
 
   build-depends:
     , aeson                 >=2.2.3  && <2.4

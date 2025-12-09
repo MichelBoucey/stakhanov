@@ -1,45 +1,52 @@
 module Database.PostgreSQL.Stakhanov
- ( conn --module Database.PostgreSQL.Stakhanov.Connection
--- , create
--- , drop
--- , read
- )
-
-where
+ ( conn
+ , create
+ , drop
+ , send
+ , read
+ , delete
+ , archive
+ ) where
 
 import           Data.Aeson.Types
 import           Data.Int
-import           Data.Text                            as T
 import           Data.Time
-import           Data.Vector                          hiding (create)
+import           Data.Vector                              hiding (create, drop)
 import           Database.PostgreSQL.Stakhanov.Connection
 import           Database.PostgreSQL.Stakhanov.Statements
 import           Database.PostgreSQL.Stakhanov.Types
-import qualified Hasql.Connection                     as C
-import qualified Hasql.Session                        as S
+import qualified Hasql.Connection                         as C
+import qualified Hasql.Session                            as S
+import           Prelude                                  hiding (drop, read)
 
 -- https://hackage.haskell.org/package/hasql
 -- https://github.com/pgmq/pgmq/blob/main/docs/api/sql/functions.md
 
-create :: C.Connection -> T.Text -> IO (Either S.SessionError ())
-create c q = S.run (S.statement q createQueue) c
+-- Queue management
 
-drop :: C.Connection -> T.Text -> IO (Either S.SessionError Bool)
-drop c q = S.run (S.statement q dropQueue) c
+create :: C.Connection -> Queue -> IO (Either S.SessionError ())
+create c Queue{..} = S.run (S.statement queueName createQueue) c
+
+purgeQueue ::a
+purgeQueue = undefined
+
+drop :: C.Connection -> Queue -> IO (Either S.SessionError Bool)
+drop c Queue{..} = S.run (S.statement queueName dropQueue) c
 
 -- Sending Messages
 
-send :: C.Connection -> T.Text -> Value -> IO (Either S.SessionError Int64)
-send c q v = S.run (S.statement (q,v) sendMessage) c
+-- TODO : Replacing Value per Object
+send :: C.Connection -> Queue -> Value -> IO (Either S.SessionError Int64)
+send c Queue{..} v = S.run (S.statement (queueName,v) sendMessage) c
 
 sendBatch :: a
 sendBatch = undefined
 
 -- Reading Messages
 
--- Should be : read :: C.Connection -> T.Text -> Int32 -> Int32 -> IO (Either S.SessionError (Maybe Messages))
-read :: C.Connection -> T.Text -> Int32 -> Int32 -> IO (Either S.SessionError (Vector (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value)))
-read c q v q' = S.run (S.statement (q,v,q') readMessages) c
+-- TODO : Should be read :: C.Connection -> T.Text -> Int32 -> Int32 -> IO (Either S.SessionError (Maybe Messages))
+read :: C.Connection -> Queue -> Int32 -> Int32 -> IO (Either S.SessionError (Vector (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value)))
+read c Queue{..} v q = S.run (S.statement (queueName,v,q) readMessages) c
 
 -- TODO : readWithPoll
 
@@ -48,12 +55,12 @@ pop = undefined
 
 -- Deleting/Archiving Messages
 
-delete :: a
-delete = undefined
+archive :: C.Connection -> Queue -> Int64 -> IO (Either S.SessionError Bool)
+archive c Queue{..} i = S.run (S.statement (queueName,i) archiveMessage) c
+
+delete :: C.Connection -> Queue -> Int64 -> IO (Either S.SessionError Bool)
+delete c Queue{..} i = S.run (S.statement (queueName,i) deleteMessage) c
 
 deleteBatch ::a
 deleteBatch =undefined
-
-purgeQueue ::a
-purgeQueue = undefined
 
