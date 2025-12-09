@@ -1,6 +1,6 @@
 module Database.PostgreSQL.Bijou.Statements where
 
-import           Contravariant.Extras.Contrazip  (contrazip3)
+import           Contravariant.Extras.Contrazip  (contrazip2,contrazip3)
 import           Data.Aeson
 import           Data.Int
 import qualified Data.Text                       as T
@@ -18,7 +18,15 @@ createQueue :: Statement T.Text ()
 createQueue = [TH.resultlessStatement|select from pgmq.create($1::text)|]
 
 sendMessage :: Statement (T.Text,Value) Int64
-sendMessage = [TH.singletonStatement|select msg_id::int8 from pgmq.send($1::text,$2::jsonb)|]
+sendMessage =
+  Statement sql encoder decoder True
+    where
+      sql = "select * from pgmq.send($1::text,$2::jsonb)"
+      encoder = 
+        contrazip2
+          (E.param (E.nonNullable E.text))
+          (E.param (E.nonNullable E.jsonb))
+      decoder = D.singleRow $ D.column $ D.nonNullable D.int8
 
 dropQueue :: Statement T.Text Bool
 dropQueue = [TH.singletonStatement|select pgmq.drop_queue($1::text)::bool|]
@@ -33,8 +41,8 @@ SELECT * FROM pgmq.read(
 data Message = Message { messageId :: Int64, readCount ::Int32, enqueuedAt :: UTCTime, visibilityTimeout :: UTCTime, jsonMessage :: !Object, jsonHeaders :: !Object }
 
 -}
-readMessage :: Statement(T.Text,Int32,Int32) (Vector (Int64, Int32, UTCTime, UTCTime, Value, Value))
-readMessage =
+readMessages :: Statement (T.Text,Int32,Int32) (Vector (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value))
+readMessages =
   Statement sql encoder decoder True
     where
       sql = "select msg_id,read_ct,enqueued_at,vt,message,headers from pgmq.read($1,$2,$3)"
@@ -51,5 +59,5 @@ readMessage =
             D.column (D.nonNullable D.timestamptz) <*>
             D.column (D.nonNullable D.timestamptz) <*>
             D.column (D.nonNullable D.jsonb) <*>
-            D.column (D.nonNullable D.jsonb)
+            D.column (D.nullable D.jsonb)
 
