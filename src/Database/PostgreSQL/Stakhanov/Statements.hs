@@ -42,6 +42,16 @@ readMessages =
           (E.param (E.nonNullable E.int4))
           (E.param (E.nonNullable E.int4))
 
+popMessage :: Statement (T.Text,Int32) (Vector (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value))
+popMessage  =
+  Statement sql encoder messageDecoder True
+    where
+      sql = "select msg_id,read_ct,enqueued_at,vt,message,headers from pgmq.pop($1,$2)"
+      encoder =
+        contrazip2
+          (E.param (E.nonNullable E.text))
+          (E.param (E.nonNullable E.int4))
+
 archiveMessage :: Statement (T.Text,Int64) Bool
 archiveMessage = [TH.singletonStatement|select pgmq.archive($1::text,$2::int8)::bool|]
 

@@ -11,7 +11,7 @@ module Database.PostgreSQL.Stakhanov
 import           Data.Aeson.Types
 import           Data.Int
 import           Data.Time
-import           Data.Vector                              hiding (create, drop)
+import           Data.Vector                              as V hiding (create, drop)
 import           Database.PostgreSQL.Stakhanov.Connection
 import           Database.PostgreSQL.Stakhanov.Statements
 import           Database.PostgreSQL.Stakhanov.Types
@@ -44,9 +44,11 @@ sendBatch = undefined
 
 -- Reading Messages
 
--- TODO : Should be read :: C.Connection -> T.Text -> Int32 -> Int32 -> IO (Either S.SessionError (Maybe Messages))
-read :: C.Connection -> Queue -> Int32 -> Int32 -> IO (Either S.SessionError (Vector (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value)))
-read c Queue{..} v q = S.run (S.statement (queueName,v,q) readMessages) c
+-- TODO : WIP
+read :: C.Connection -> Queue -> Int32 -> Int32 -> IO (Either S.SessionError (Maybe Messages))
+read c Queue{..} v q = do
+  Right vts <- S.run (S.statement (queueName,v,q) readMessages) c
+  pure $ Right $ Just (V.map tupleToMessage vts :: Messages)
 
 -- TODO : readWithPoll
 
@@ -57,6 +59,8 @@ pop = undefined
 
 archive :: C.Connection -> Queue -> Int64 -> IO (Either S.SessionError Bool)
 archive c Queue{..} i = S.run (S.statement (queueName,i) archiveMessage) c
+
+archiveBatch = undefined
 
 delete :: C.Connection -> Queue -> Int64 -> IO (Either S.SessionError Bool)
 delete c Queue{..} i = S.run (S.statement (queueName,i) deleteMessage) c
