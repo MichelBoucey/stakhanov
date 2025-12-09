@@ -1,4 +1,4 @@
-# Revision history for Bijou
+# Revision history for Stakhanov
 
 ## 0.1.0.0 -- YYYY-mm-dd
 
