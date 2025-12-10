@@ -1,16 +1,25 @@
 module Database.PostgreSQL.Stakhanov
  ( conn
+
+ -- * Queue management
  , create
  , drop
+
+ -- * Sending Messages
  , send
+
+ -- * Reading Messages
  , read
- , delete
+ , pop
+
+-- Deleting/Archiving Messages
  , archive
+ , delete
+
  ) where
 
 import           Data.Aeson.Types
 import           Data.Int
-import           Data.Time
 import           Data.Vector                              as V hiding (create, drop)
 import           Database.PostgreSQL.Stakhanov.Connection
 import           Database.PostgreSQL.Stakhanov.Statements
@@ -22,29 +31,25 @@ import           Prelude                                  hiding (drop, read)
 -- https://hackage.haskell.org/package/hasql
 -- https://github.com/pgmq/pgmq/blob/main/docs/api/sql/functions.md
 
--- Queue management
-
 create :: C.Connection -> Queue -> IO (Either S.SessionError ())
 create c Queue{..} = S.run (S.statement queueName createQueue) c
 
-purgeQueue ::a
-purgeQueue = undefined
+-- |Permanently deletes all messages in a queue.
+-- Returns the number of messages that were deleted.
+purge ::a
+purge = undefined
 
 drop :: C.Connection -> Queue -> IO (Either S.SessionError Bool)
 drop c Queue{..} = S.run (S.statement queueName dropQueue) c
 
--- Sending Messages
-
--- TODO : Replacing Value per Object
 send :: C.Connection -> Queue -> Value -> IO (Either S.SessionError Int64)
 send c Queue{..} v = S.run (S.statement (queueName,v) sendMessage) c
 
-sendBatch :: a
-sendBatch = undefined
+batchSend :: a
+batchSend = undefined
 
--- Reading Messages
-
--- TODO : WIP
+-- |Read one or more messages from a queue. The VT specifies the amount of time
+-- in seconds that the message will be invisible to other consumers after reading
 read :: C.Connection -> Queue -> Int32 -> Int32 -> IO (Either S.SessionError (Maybe Messages))
 read c Queue{..} v q = do
   Right vts <- S.run (S.statement (queueName,v,q) readMessages) c
@@ -52,19 +57,27 @@ read c Queue{..} v q = do
 
 -- TODO : readWithPoll
 
-pop :: a
-pop = undefined
-
--- Deleting/Archiving Messages
+-- |Reads one or more messages from a queue and deletes them upon read.
+--
+-- Note: utilization of pop() results in at-most-once delivery semantics
+-- if the consuming application does not guarantee processing of the message.
+--
+pop :: C.Connection -> Queue -> Int32 -> IO (Either S.SessionError (Maybe Messages))
+pop c Queue{..} q = do
+  Right vts <- S.run (S.statement (queueName,q) popMessages) c
+  pure $ Right $ Just (V.map tupleToMessage vts :: Messages)
 
 archive :: C.Connection -> Queue -> Int64 -> IO (Either S.SessionError Bool)
 archive c Queue{..} i = S.run (S.statement (queueName,i) archiveMessage) c
 
-archiveBatch = undefined
+batchArchive :: a
+batchArchive = undefined
 
+-- |Deletes a single message from a queue.
 delete :: C.Connection -> Queue -> Int64 -> IO (Either S.SessionError Bool)
 delete c Queue{..} i = S.run (S.statement (queueName,i) deleteMessage) c
 
-deleteBatch ::a
-deleteBatch =undefined
+-- |Delete one or many messages from a queue.
+batchDelete ::a
+batchDelete =undefined
 

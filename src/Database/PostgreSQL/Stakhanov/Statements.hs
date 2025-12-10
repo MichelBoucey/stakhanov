@@ -42,8 +42,8 @@ readMessages =
           (E.param (E.nonNullable E.int4))
           (E.param (E.nonNullable E.int4))
 
-popMessage :: Statement (T.Text,Int32) (Vector (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value))
-popMessage  =
+popMessages :: Statement (T.Text,Int32) (Vector (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value))
+popMessages =
   Statement sql encoder messageDecoder True
     where
       sql = "select msg_id,read_ct,enqueued_at,vt,message,headers from pgmq.pop($1,$2)"
