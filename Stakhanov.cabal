@@ -51,6 +51,5 @@ library
     , time                  >=1.9.3  && <1.16
     , vector                >=0.12.2 && <0.14
 
-  -- , hasql-dynamic-statements
   hs-source-dirs:     src
   default-language:   Haskell2010
