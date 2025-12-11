@@ -10,7 +10,7 @@ module Database.PostgreSQL.Stakhanov
 
  -- * Reading Messages
  , read
- , pop
+-- , pop
 
 -- Deleting/Archiving Messages
  , archive
@@ -27,6 +27,7 @@ import           Database.PostgreSQL.Stakhanov.Types
 import qualified Hasql.Connection                         as C
 import qualified Hasql.Session                            as S
 import           Prelude                                  hiding (drop, read)
+-- import Data.Either
 
 -- https://hackage.haskell.org/package/hasql
 -- https://github.com/pgmq/pgmq/blob/main/docs/api/sql/functions.md
@@ -52,8 +53,13 @@ batchSend = undefined
 -- in seconds that the message will be invisible to other consumers after reading
 read :: C.Connection -> Queue -> Int32 -> Int32 -> IO (Either S.SessionError (Maybe Messages))
 read c Queue{..} v q = do
-  Right vts <- S.run (S.statement (queueName,v,q) readMessages) c
-  pure $ Right $ Just $ msgTupleToMsg <$> vts
+  evts <- S.run (S.statement (queueName,v,q) readMessages) c
+  pure $ (\m -> Just (Messages (msgTupleToMsg <$> m))) <$> evts
+
+-- read' :: C.Connection -> Queue -> Int32 -> Int32 -> IO (Either S.SessionError (Maybe Messages))
+-- read' c Queue{..} v q = do
+--   evts <- S.run (S.statement (queueName,v,q) readMessages) c
+--   pure $ (\m -> msgTupleToMsg <$> m) <$> evts
 
 -- TODO : readWithPoll
 
@@ -62,10 +68,12 @@ read c Queue{..} v q = do
 -- Note: utilization of pop() results in at-most-once delivery semantics
 -- if the consuming application does not guarantee processing of the message.
 --
+{-
 pop :: C.Connection -> Queue -> Int32 -> IO (Either S.SessionError (Maybe Messages))
 pop c Queue{..} q = do
   Right vts <- S.run (S.statement (queueName,q) popMessages) c
   pure $ Right $ Just $ msgTupleToMsg <$> vts
+-}
 
 archive :: C.Connection -> Queue -> Int64 -> IO (Either S.SessionError Bool)
 archive c Queue{..} i = S.run (S.statement (queueName,i) archiveMessage) c

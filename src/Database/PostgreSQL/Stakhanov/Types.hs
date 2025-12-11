@@ -22,7 +22,9 @@ data Message =
     , headers           :: !(Maybe Value)
     } deriving (Show,Generic)
 
-type Messages = Vector Message
+data Messages =
+  Messages { unMessages :: Vector Message }
+  deriving (Show)
 
 msgTupleToMsg :: (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value) -> Message
 msgTupleToMsg (e1,e2,e3,e4,e5,e6) =
