@@ -34,7 +34,6 @@ library
     Database.PostgreSQL.Stakhanov.Types
 
   default-extensions:
-    DeriveGeneric
     OverloadedStrings
     QuasiQuotes
     RecordWildCards

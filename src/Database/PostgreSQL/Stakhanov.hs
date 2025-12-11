@@ -20,11 +20,10 @@ module Database.PostgreSQL.Stakhanov
 
 import           Data.Aeson.Types
 import           Data.Int
-import           Data.Vector                              as V hiding (create,
-                                                                drop)
 import           Database.PostgreSQL.Stakhanov.Connection
 import           Database.PostgreSQL.Stakhanov.Statements
 import           Database.PostgreSQL.Stakhanov.Types
+import           Database.PostgreSQL.Stakhanov.Internal
 import qualified Hasql.Connection                         as C
 import qualified Hasql.Session                            as S
 import           Prelude                                  hiding (drop, read)
@@ -54,7 +53,7 @@ send
   :: C.Connection
   -> Queue
   -> Value
-  -> IO (Either S.SessionError Int64)
+  -> IO (Either S.SessionError MsgId)
 send c Queue{..} v = S.run (S.statement (queueName,v) sendMessage) c
 
 batchSend :: a
@@ -88,7 +87,7 @@ pop c Queue{..} q =
 archive
   :: C.Connection
   -> Queue
-  -> Int64
+  -> MsgId
   -> IO (Either S.SessionError Bool)
 archive c Queue{..} i = S.run (S.statement (queueName,i) archiveMessage) c
 
@@ -99,19 +98,11 @@ batchArchive = undefined
 delete
   :: C.Connection
   -> Queue
-  -> Int64
+  -> MsgId
   -> IO (Either S.SessionError Bool)
 delete c Queue{..} i = S.run (S.statement (queueName,i) deleteMessage) c
 
 -- | Delete one or many messages from a queue.
 batchDelete ::a
 batchDelete =undefined
-
--- mMsgs
---   :: Vector (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value)
---   -> Maybe Messages
-mMsgs vts =
-  if V.null vts
-    then Nothing
-    else Just $ Messages $ msgTupleToMsg <$> vts
 
