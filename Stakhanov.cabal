@@ -30,8 +30,11 @@ library
   exposed-modules:
     Database.PostgreSQL.Stakhanov
     Database.PostgreSQL.Stakhanov.Connection
-    Database.PostgreSQL.Stakhanov.Statements
     Database.PostgreSQL.Stakhanov.Types
+
+  exposed-modules:
+    Database.PostgreSQL.Stakhanov.Internal
+    Database.PostgreSQL.Stakhanov.Statements
 
   default-extensions:
     OverloadedStrings
