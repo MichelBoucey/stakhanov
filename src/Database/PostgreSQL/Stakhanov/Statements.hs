@@ -10,6 +10,7 @@ import qualified Hasql.Decoders                  as D
 import qualified Hasql.Encoders                  as E
 import           Hasql.Statement
 import qualified Hasql.TH                        as TH
+-- Hasql.DynamicStatements.Statement
 
 -- https://hackage.haskell.org/package/hasql-th-0.4.0.23/docs/Hasql-TH.html
 -- https://github.com/pgmq/pgmq/blob/main/docs/api/sql/functions.md
@@ -30,6 +31,19 @@ sendMessage =
           (E.param (E.nonNullable E.text))
           (E.param (E.nonNullable E.jsonb))
       decoder = D.singleRow $ D.column $ D.nonNullable D.int8
+
+-- selectSubstring :: Text -> Maybe Int32 -> Maybe Int32 -> Statement () Text
+-- selectSubstring string from to = let
+--   snippet =
+--     "select substring(" <> Snippet.param string <>
+--     foldMap (mappend " from " . Snippet.param) from <>
+--     foldMap (mappend " for " . Snippet.param) to <>
+--     ")"
+--   decoder = Decoders.singleRow (Decoders.column (Decoders.nonNullable Decoders.text))
+--   in dynamicallyParameterized snippet decoder True
+
+batchSendStmt :: Statement (T.Text,Vector Value, Maybe (Vector Value), Maybe Int32, Maybe UTCTime) (Vector Int64)
+batchSendStmt = undefined
 
 readMessages :: Statement (T.Text,Int32,Int32) (Vector (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value))
 readMessages =
