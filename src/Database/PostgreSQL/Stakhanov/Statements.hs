@@ -1,19 +1,18 @@
 module Database.PostgreSQL.Stakhanov.Statements where
 
-import           Contravariant.Extras.Contrazip    (contrazip2, contrazip3)
+import           Contravariant.Extras.Contrazip         (contrazip2, contrazip3)
 import           Data.Aeson
 import           Data.Int
-import           Data.List                         (intersperse)
-import qualified Data.Monoid                       as M
-import qualified Data.Text                         as T
+import qualified Data.Text                              as T
 import           Data.Time
-import qualified Data.Vector                       as V
-import qualified Hasql.Decoders                    as D
-import qualified Hasql.DynamicStatements.Snippet   as S
+import qualified Data.Vector                            as V
+import           Database.PostgreSQL.Stakhanov.Internal
+import qualified Hasql.Decoders                         as D
+import qualified Hasql.DynamicStatements.Snippet        as S
 import           Hasql.DynamicStatements.Statement
-import qualified Hasql.Encoders                    as E
+import qualified Hasql.Encoders                         as E
 import           Hasql.Statement
-import qualified Hasql.TH                          as TH
+import qualified Hasql.TH                               as TH
 
 -- https://hackage.haskell.org/package/hasql-th-0.4.0.23/docs/Hasql-TH.html
 -- https://hackage.haskell.org/package/hasql-dynamic-statements-0.3.1.8
@@ -39,9 +38,7 @@ sendMessage =
 sendMessages :: T.Text -> (V.Vector Value) -> Statement () (V.Vector Int64)
 sendMessages q msgs =
   let snippet =
-        "select * from pgmq.send_batch(" <> S.param q <> ",ARRAY["
-        <> M.mconcat (intersperse (S.sql ",") $ V.toList $ S.encoderAndParam (E.nonNullable E.json) <$> msgs)
-        <> "]::jsonb[])"
+        "select * from pgmq.send_batch(" <> S.param q <> "," <> jsonArrayEncoder msgs <> ")"
       decoder = D.rowVector (D.column (D.nonNullable D.int8))
   in dynamicallyParameterized snippet decoder True
 
