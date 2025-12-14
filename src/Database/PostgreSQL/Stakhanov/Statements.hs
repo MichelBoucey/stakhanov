@@ -1,18 +1,22 @@
 module Database.PostgreSQL.Stakhanov.Statements where
 
-import           Contravariant.Extras.Contrazip  (contrazip2,contrazip3)
+import           Contravariant.Extras.Contrazip    (contrazip2, contrazip3)
 import           Data.Aeson
 import           Data.Int
-import qualified Data.Text                       as T
+import           Data.List                         (intersperse)
+import qualified Data.Monoid                       as M
+import qualified Data.Text                         as T
 import           Data.Time
-import           Data.Vector
-import qualified Hasql.Decoders                  as D
-import qualified Hasql.Encoders                  as E
+import qualified Data.Vector                       as V
+import qualified Hasql.Decoders                    as D
+import qualified Hasql.DynamicStatements.Snippet   as S
+import           Hasql.DynamicStatements.Statement
+import qualified Hasql.Encoders                    as E
 import           Hasql.Statement
-import qualified Hasql.TH                        as TH
--- Hasql.DynamicStatements.Statement
+import qualified Hasql.TH                          as TH
 
 -- https://hackage.haskell.org/package/hasql-th-0.4.0.23/docs/Hasql-TH.html
+-- https://hackage.haskell.org/package/hasql-dynamic-statements-0.3.1.8
 -- https://github.com/pgmq/pgmq/blob/main/docs/api/sql/functions.md
 
 createQueue :: Statement T.Text ()
@@ -23,14 +27,23 @@ dropQueue = [TH.singletonStatement|select pgmq.drop_queue($1::text)::bool|]
 
 sendMessage :: Statement (T.Text,Value) Int64
 sendMessage =
-  Statement sql encoder decoder True
+  Statement snippet encoder decoder True
     where
-      sql = "select * from pgmq.send($1::text,$2::jsonb)"
-      encoder = 
+      snippet = "select * from pgmq.send($1::text,$2::jsonb)"
+      encoder =
         contrazip2
           (E.param (E.nonNullable E.text))
           (E.param (E.nonNullable E.jsonb))
       decoder = D.singleRow $ D.column $ D.nonNullable D.int8
+
+sendMessages :: T.Text -> (V.Vector Value) -> Statement () (V.Vector Int64)
+sendMessages q msgs =
+  let snippet =
+        "select * from pgmq.send_batch(" <> S.param q <> ",ARRAY["
+        <> M.mconcat (intersperse (S.sql ",") $ V.toList $ S.encoderAndParam (E.nonNullable E.json) <$> msgs)
+        <> "]::jsonb[])"
+      decoder = D.rowVector (D.column (D.nonNullable D.int8))
+  in dynamicallyParameterized snippet decoder True
 
 -- selectSubstring :: Text -> Maybe Int32 -> Maybe Int32 -> Statement () Text
 -- selectSubstring string from to = let
@@ -41,26 +54,24 @@ sendMessage =
 --     ")"
 --   decoder = Decoders.singleRow (Decoders.column (Decoders.nonNullable Decoders.text))
 --   in dynamicallyParameterized snippet decoder True
+-- TODO : sendMessages'
 
-batchSendStmt :: Statement (T.Text,Vector Value, Maybe (Vector Value), Maybe Int32, Maybe UTCTime) (Vector Int64)
-batchSendStmt = undefined
-
-readMessages :: Statement (T.Text,Int32,Int32) (Vector (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value))
+readMessages :: Statement (T.Text,Int32,Int32) (V.Vector (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value))
 readMessages =
-  Statement sql encoder messageDecoder True
+  Statement snippet encoder messageDecoder True
     where
-      sql = "select msg_id,read_ct,enqueued_at,vt,message,headers from pgmq.read($1,$2,$3)"
+      snippet = "select msg_id,read_ct,enqueued_at,vt,message,headers from pgmq.read($1,$2,$3)"
       encoder =
         contrazip3
           (E.param (E.nonNullable E.text))
           (E.param (E.nonNullable E.int4))
           (E.param (E.nonNullable E.int4))
 
-popMessages :: Statement (T.Text,Int32) (Vector (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value))
+popMessages :: Statement (T.Text,Int32) (V.Vector (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value))
 popMessages =
-  Statement sql encoder messageDecoder True
+  Statement snippet encoder messageDecoder True
     where
-      sql = "select msg_id,read_ct,enqueued_at,vt,message,headers from pgmq.pop($1,$2)"
+      snippet = "select msg_id,read_ct,enqueued_at,vt,message,headers from pgmq.pop($1,$2)"
       encoder =
         contrazip2
           (E.param (E.nonNullable E.text))
@@ -72,7 +83,7 @@ archiveMessage = [TH.singletonStatement|select pgmq.archive($1::text,$2::int8)::
 deleteMessage :: Statement (T.Text,Int64) Bool
 deleteMessage = [TH.singletonStatement|select pgmq.delete($1::text,$2::int8)::bool|]
 
-messageDecoder :: D.Result (Vector (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value))
+messageDecoder :: D.Result (V.Vector (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value))
 messageDecoder =
   D.rowVector $
     (,,,,,) <$>

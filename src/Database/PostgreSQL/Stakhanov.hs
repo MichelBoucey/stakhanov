@@ -27,7 +27,6 @@ import           Database.PostgreSQL.Stakhanov.Internal
 import qualified Hasql.Connection                         as C
 import qualified Hasql.Session                            as S
 import           Prelude                                  hiding (drop, read)
--- import Data.Either
 
 -- https://hackage.haskell.org/package/hasql
 -- https://github.com/pgmq/pgmq/blob/main/docs/api/sql/functions.md
@@ -40,8 +39,7 @@ create c Queue{..} = S.run (S.statement queueName createQueue) c
 
 -- | Permanently deletes all messages in a queue.
 -- Returns the number of messages that were deleted.
-purge ::a
-purge = undefined
+-- TODO : purge
 
 drop
   :: C.Connection
@@ -56,8 +54,7 @@ send
   -> IO (Either S.SessionError MsgId)
 send c Queue{..} v = S.run (S.statement (queueName,v) sendMessage) c
 
-batchSend :: a
-batchSend = undefined
+-- TODO : batchSend
 
 -- | Read one or more messages from a queue. The VT specifies the amount of time
 -- in seconds that the message will be invisible to other consumers after reading
@@ -91,8 +88,7 @@ archive
   -> IO (Either S.SessionError Bool)
 archive c Queue{..} i = S.run (S.statement (queueName,i) archiveMessage) c
 
-batchArchive :: a
-batchArchive = undefined
+-- TODO : batchArchive
 
 -- | Deletes a single message from a queue.
 delete
@@ -103,6 +99,5 @@ delete
 delete c Queue{..} i = S.run (S.statement (queueName,i) deleteMessage) c
 
 -- | Delete one or many messages from a queue.
-batchDelete ::a
-batchDelete =undefined
+-- TODO : batchDelete
 
