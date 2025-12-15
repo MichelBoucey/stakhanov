@@ -7,6 +7,7 @@ module Database.PostgreSQL.Stakhanov
 
  -- * Sending Messages
  , send
+ , batchSend
 
  -- * Reading Messages
  , read
@@ -15,15 +16,17 @@ module Database.PostgreSQL.Stakhanov
 -- Deleting/Archiving Messages
  , archive
  , delete
+ -- , batchDelete
 
  ) where
 
 import           Data.Aeson.Types
 import           Data.Int
+import qualified Data.Vector                              as V
 import           Database.PostgreSQL.Stakhanov.Connection
+import           Database.PostgreSQL.Stakhanov.Internal
 import           Database.PostgreSQL.Stakhanov.Statements
 import           Database.PostgreSQL.Stakhanov.Types
-import           Database.PostgreSQL.Stakhanov.Internal
 import qualified Hasql.Connection                         as C
 import qualified Hasql.Session                            as S
 import           Prelude                                  hiding (drop, read)
@@ -54,7 +57,12 @@ send
   -> IO (Either S.SessionError MsgId)
 send c Queue{..} v = S.run (S.statement (queueName,v) sendMessage) c
 
--- TODO : batchSend
+batchSend
+  :: C.Connection
+  -> Queue
+  -> (V.Vector Value)
+  -> IO (Either S.SessionError (V.Vector Int64))
+batchSend c Queue{..} v = S.run (S.statement () $ sendMessages queueName v) c
 
 -- | Read one or more messages from a queue. The VT specifies the amount of time
 -- in seconds that the message will be invisible to other consumers after reading

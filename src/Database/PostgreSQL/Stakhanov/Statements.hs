@@ -51,6 +51,7 @@ sendMessages q msgs =
 --     ")"
 --   decoder = Decoders.singleRow (Decoders.column (Decoders.nonNullable Decoders.text))
 --   in dynamicallyParameterized snippet decoder True
+
 -- TODO : sendMessages'
 
 readMessages :: Statement (T.Text,Int32,Int32) (V.Vector (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value))
