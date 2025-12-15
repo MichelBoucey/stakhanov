@@ -14,12 +14,11 @@ import qualified Hasql.Encoders                         as E
 import           Hasql.Statement
 import qualified Hasql.TH                               as TH
 
--- https://hackage.haskell.org/package/hasql-th-0.4.0.23/docs/Hasql-TH.html
--- https://hackage.haskell.org/package/hasql-dynamic-statements-0.3.1.8
--- https://github.com/pgmq/pgmq/blob/main/docs/api/sql/functions.md
-
 createQueue :: Statement T.Text ()
 createQueue = [TH.resultlessStatement|select from pgmq.create($1::text)|]
+
+purgeQueue :: Statement T.Text Int64
+purgeQueue = [TH.singletonStatement|select pgmq.purge_queue($1::text)::int8|]
 
 dropQueue :: Statement T.Text Bool
 dropQueue = [TH.singletonStatement|select pgmq.drop_queue($1::text)::bool|]

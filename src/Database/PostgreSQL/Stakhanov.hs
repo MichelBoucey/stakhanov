@@ -3,6 +3,7 @@ module Database.PostgreSQL.Stakhanov
 
  -- * Queue management
  , create
+ , purge
  , drop
 
  -- * Sending Messages
@@ -13,12 +14,14 @@ module Database.PostgreSQL.Stakhanov
  , read
  , pop
 
--- * Deleting/Archiving Messages
+ -- * Deleting/Archiving Messages
  , archive
  , batchArchive
  , delete
  , batchDelete
 
+ -- * Utilities
+ -- , metrics
  ) where
 
 import           Data.Aeson.Types
@@ -32,9 +35,7 @@ import qualified Hasql.Connection                         as C
 import qualified Hasql.Session                            as S
 import           Prelude                                  hiding (drop, read)
 
--- https://hackage.haskell.org/package/hasql
--- https://github.com/pgmq/pgmq/blob/main/docs/api/sql/functions.md
-
+-- | Create a new queue.
 create
   :: C.Connection
   -> Queue
@@ -43,14 +44,20 @@ create c Queue{..} = S.run (S.statement queueName createQueue) c
 
 -- | Permanently deletes all messages in a queue.
 -- Returns the number of messages that were deleted.
--- TODO : purge
+purge
+  :: C.Connection
+  -> Queue
+  -> IO (Either S.SessionError Int64)
+purge c Queue{..} = S.run (S.statement queueName purgeQueue) c
 
+-- | Deletes a queue and its archive table.
 drop
   :: C.Connection
   -> Queue
   -> IO (Either S.SessionError Bool)
 drop c Queue{..} = S.run (S.statement queueName dropQueue) c
 
+-- | Send a single message to a queue.
 send
   :: C.Connection
   -> Queue
@@ -58,6 +65,7 @@ send
   -> IO (Either S.SessionError MsgId)
 send c Queue{..} v = S.run (S.statement (queueName,v) sendMessage) c
 
+-- | Send on or more messages to a queue.
 batchSend
   :: C.Connection
   -> Queue
@@ -78,10 +86,6 @@ read c Queue{..} v q =
 -- TODO : readWithPoll
 
 -- | Reads one or more messages from a queue and deletes them upon read.
---
--- Note: utilization of pop() results in at-most-once delivery semantics
--- if the consuming application does not guarantee processing of the message.
---
 pop
   :: C.Connection
   -> Queue
@@ -90,6 +94,8 @@ pop
 pop c Queue{..} q =
   S.run (S.statement (queueName,q) popMessages) c >>= \e -> pure $ mMsgs <$> e
 
+-- | Removes a single requested message from the specified queue
+-- and inserts it into the queue's archive.
 archive
   :: C.Connection
   -> Queue
@@ -97,6 +103,8 @@ archive
   -> IO (Either S.SessionError Bool)
 archive c Queue{..} i = S.run (S.statement (queueName,i) archiveMessage) c
 
+-- | Deletes a batch of requested messages from the specified queue and inserts them into the queue's archive.
+-- Returns a Vector of MsgId that were successfully archived.
 batchArchive
   :: C.Connection
   -> Queue
