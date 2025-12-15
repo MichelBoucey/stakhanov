@@ -78,8 +78,22 @@ popMessages =
 archiveMessage :: Statement (T.Text,Int64) Bool
 archiveMessage = [TH.singletonStatement|select pgmq.archive($1::text,$2::int8)::bool|]
 
+archiveMessages :: T.Text -> (V.Vector Int64) -> Statement () (V.Vector Int64)
+archiveMessages q v =
+  let snippet =
+        "select * from pgmq.archive(" <> S.param q <> "," <> jsonArrayEncoder' v <> ")"
+      decoder = D.rowVector (D.column (D.nonNullable D.int8))
+  in dynamicallyParameterized snippet decoder True
+
 deleteMessage :: Statement (T.Text,Int64) Bool
 deleteMessage = [TH.singletonStatement|select pgmq.delete($1::text,$2::int8)::bool|]
+
+deleteMessages :: T.Text -> (V.Vector Int64) -> Statement () (V.Vector Int64)
+deleteMessages q v =
+  let snippet =
+        "select * from pgmq.delete(" <> S.param q <> "," <> jsonArrayEncoder' v <> ")"
+      decoder = D.rowVector (D.column (D.nonNullable D.int8))
+  in dynamicallyParameterized snippet decoder True
 
 messageDecoder :: D.Result (V.Vector (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value))
 messageDecoder =

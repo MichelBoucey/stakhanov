@@ -13,10 +13,11 @@ module Database.PostgreSQL.Stakhanov
  , read
  , pop
 
--- Deleting/Archiving Messages
+-- * Deleting/Archiving Messages
  , archive
+ , batchArchive
  , delete
- -- , batchDelete
+ , batchDelete
 
  ) where
 
@@ -96,7 +97,12 @@ archive
   -> IO (Either S.SessionError Bool)
 archive c Queue{..} i = S.run (S.statement (queueName,i) archiveMessage) c
 
--- TODO : batchArchive
+batchArchive
+  :: C.Connection
+  -> Queue
+  -> (V.Vector MsgId)
+  -> IO (Either S.SessionError (V.Vector MsgId))
+batchArchive c Queue{..} v = S.run (S.statement () $ archiveMessages queueName v) c
 
 -- | Deletes a single message from a queue.
 delete
@@ -107,10 +113,10 @@ delete
 delete c Queue{..} i = S.run (S.statement (queueName,i) deleteMessage) c
 
 -- | Delete one or many messages from a queue.
--- batchDelete
---   :: C.Connection
---   -> Queue
---   -> (V.Vector MsgId)
---   -> IO (Either S.SessionError (V.Vector MsgId))
--- batchDelete c Queue{..} v = S.run (S.statement () $ sendMessages queueName v) c
+batchDelete
+  :: C.Connection
+  -> Queue
+  -> (V.Vector MsgId)
+  -> IO (Either S.SessionError (V.Vector MsgId))
+batchDelete c Queue{..} v = S.run (S.statement () $ deleteMessages queueName v) c
 

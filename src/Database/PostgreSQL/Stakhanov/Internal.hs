@@ -11,7 +11,7 @@ import qualified Hasql.DynamicStatements.Snippet     as S
 import qualified Hasql.Encoders                      as E
 
 mMsgs
-  :: Vector (MsgId, Int32, UTCTime, UTCTime, Value, Maybe Value)
+  :: Vector (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value)
   -> Maybe Messages
 mMsgs vts =
   if V.null vts
@@ -19,7 +19,7 @@ mMsgs vts =
     else Just $ Messages $ msgTupleToMsg <$> vts
 
 msgTupleToMsg
-  :: (MsgId, Int32, UTCTime, UTCTime, Value, Maybe Value)
+  :: (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value)
   -> Message
 msgTupleToMsg (e1,e2,e3,e4,e5,e6) =
   Message
@@ -30,7 +30,11 @@ msgTupleToMsg (e1,e2,e3,e4,e5,e6) =
     , message           = e5
     , headers           = e6 }
 
-jsonArrayEncoder :: (V.Vector Value) -> S.Snippet
-jsonArrayEncoder msgs =
-  "ARRAY[" <> M.mconcat (intersperse (S.sql ",") $ V.toList $ S.encoderAndParam (E.nonNullable E.json) <$> msgs) <> "]::jsonb[]"
+jsonArrayEncoder :: V.Vector Value -> S.Snippet
+jsonArrayEncoder v =
+  "ARRAY[" <> M.mconcat (intersperse (S.sql ",") $ V.toList $ S.encoderAndParam (E.nonNullable E.json) <$> v) <> "]::jsonb[]"
+
+jsonArrayEncoder' :: V.Vector Int64 -> S.Snippet
+jsonArrayEncoder' v =
+  "ARRAY[" <> M.mconcat (intersperse (S.sql ",") $ V.toList $ S.encoderAndParam (E.nonNullable E.int8) <$> v) <> "]::bigint[]"
 
