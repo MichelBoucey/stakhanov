@@ -32,5 +32,5 @@ msgTupleToMsg (e1,e2,e3,e4,e5,e6) =
 
 jsonArrayEncoder :: (V.Vector Value) -> S.Snippet
 jsonArrayEncoder msgs =
-  "ARRAY[" <> M.mconcat (intersperse (S.sql ",") $ V.toList $ S.encoderAndParam (E.nonNullable E.json) <$> msgs) <> "]::json[]"
+  "ARRAY[" <> M.mconcat (intersperse (S.sql ",") $ V.toList $ S.encoderAndParam (E.nonNullable E.json) <$> msgs) <> "]::jsonb[]"
 

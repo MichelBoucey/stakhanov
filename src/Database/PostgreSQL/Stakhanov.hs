@@ -61,7 +61,7 @@ batchSend
   :: C.Connection
   -> Queue
   -> (V.Vector Value)
-  -> IO (Either S.SessionError (V.Vector Int64))
+  -> IO (Either S.SessionError (V.Vector MsgId))
 batchSend c Queue{..} v = S.run (S.statement () $ sendMessages queueName v) c
 
 -- | Read one or more messages from a queue. The VT specifies the amount of time
@@ -107,5 +107,10 @@ delete
 delete c Queue{..} i = S.run (S.statement (queueName,i) deleteMessage) c
 
 -- | Delete one or many messages from a queue.
--- TODO : batchDelete
+-- batchDelete
+--   :: C.Connection
+--   -> Queue
+--   -> (V.Vector MsgId)
+--   -> IO (Either S.SessionError (V.Vector MsgId))
+-- batchDelete c Queue{..} v = S.run (S.statement () $ sendMessages queueName v) c
 
