@@ -37,6 +37,7 @@ library
     Database.PostgreSQL.Stakhanov.Statements
 
   default-extensions:
+    LambdaCase
     OverloadedStrings
     QuasiQuotes
     RecordWildCards

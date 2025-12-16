@@ -3,6 +3,7 @@ module Database.PostgreSQL.Stakhanov
 
  -- * Queue management
  , create
+ , declare
  , purge
  , drop
 
@@ -20,12 +21,13 @@ module Database.PostgreSQL.Stakhanov
  , delete
  , batchDelete
 
- -- * Utilities
+ -- -- * Utilities
  -- , metrics
  ) where
 
 import           Data.Aeson.Types
 import           Data.Int
+import           Data.Text                                as T hiding (drop)
 import qualified Data.Vector                              as V
 import           Database.PostgreSQL.Stakhanov.Connection
 import           Database.PostgreSQL.Stakhanov.Internal
@@ -38,9 +40,17 @@ import           Prelude                                  hiding (drop, read)
 -- | Create a new queue.
 create
   :: C.Connection
-  -> Queue
-  -> IO (Either S.SessionError ())
-create c Queue{..} = S.run (S.statement queueName createQueue) c
+  -> T.Text
+  -> IO (Either S.SessionError Queue)
+create c t =
+  S.run (S.statement t createQueue) c >>=
+    \case
+      Right () -> pure $ Right $ Queue t Nothing
+      Left r   -> pure $ Left r
+
+-- | Declare an already existing queue
+declare :: T.Text -> Queue
+declare t = Queue t Nothing
 
 -- | Permanently deletes all messages in a queue.
 -- Returns the number of messages that were deleted.
@@ -50,7 +60,7 @@ purge
   -> IO (Either S.SessionError Int64)
 purge c Queue{..} = S.run (S.statement queueName purgeQueue) c
 
--- | Deletes a queue and its archive table.
+-- | Deletes a queue and its archives.
 drop
   :: C.Connection
   -> Queue
@@ -69,7 +79,7 @@ send c Queue{..} v = S.run (S.statement (queueName,v) sendMessage) c
 batchSend
   :: C.Connection
   -> Queue
-  -> (V.Vector Value)
+  -> V.Vector Value
   -> IO (Either S.SessionError (V.Vector MsgId))
 batchSend c Queue{..} v = S.run (S.statement () $ sendMessages queueName v) c
 
@@ -108,7 +118,7 @@ archive c Queue{..} i = S.run (S.statement (queueName,i) archiveMessage) c
 batchArchive
   :: C.Connection
   -> Queue
-  -> (V.Vector MsgId)
+  -> V.Vector MsgId
   -> IO (Either S.SessionError (V.Vector MsgId))
 batchArchive c Queue{..} v = S.run (S.statement () $ archiveMessages queueName v) c
 
@@ -124,7 +134,7 @@ delete c Queue{..} i = S.run (S.statement (queueName,i) deleteMessage) c
 batchDelete
   :: C.Connection
   -> Queue
-  -> (V.Vector MsgId)
+  -> V.Vector MsgId
   -> IO (Either S.SessionError (V.Vector MsgId))
 batchDelete c Queue{..} v = S.run (S.statement () $ deleteMessages queueName v) c
 

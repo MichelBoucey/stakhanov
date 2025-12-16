@@ -6,12 +6,11 @@ import qualified Data.Text        as T
 import           Data.Time
 import           Data.Vector
 
--- https://github.com/pgmq/pgmq/blob/main/docs/api/sql/types.md
--- https://github.com/pgmq/pgmq/blob/main/pgmq-extension/sql/pgmq.sql
-
-newtype Queue =
-  Queue { queueName :: T.Text }
-  deriving (Show)
+data Queue =
+  Queue
+    { queueName    :: T.Text
+    , queueMetrics :: Maybe Metrics
+    } deriving (Show)
 
 type MsgId = Int64
 
@@ -28,4 +27,14 @@ data Message =
 newtype Messages =
   Messages { unMessages :: Vector Message }
   deriving (Show)
+
+data Metrics =
+  Metrics
+    { queueLength        :: Int64
+    , newestMsgAge       :: Int32
+    , oldestMsgAge       :: Int32
+    , totalMessages      :: Int64
+    , scrapeTime         :: UTCTime
+    , queueVisibleLength :: Int64
+    } deriving (Show)
 
