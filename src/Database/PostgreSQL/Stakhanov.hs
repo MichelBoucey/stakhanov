@@ -52,6 +52,8 @@ create c t =
 declare :: T.Text -> Queue
 declare t = Queue t Nothing
 
+-- metrics :: Queue -> (Either S.SessionError Queue)
+
 -- | Permanently deletes all messages in a queue.
 -- Returns the number of messages that were deleted.
 purge

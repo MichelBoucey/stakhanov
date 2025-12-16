@@ -41,18 +41,6 @@ sendMessages q msgs =
       decoder = D.rowVector (D.column (D.nonNullable D.int8))
   in dynamicallyParameterized snippet decoder True
 
--- selectSubstring :: Text -> Maybe Int32 -> Maybe Int32 -> Statement () Text
--- selectSubstring string from to = let
---   snippet =
---     "select substring(" <> Snippet.param string <>
---     foldMap (mappend " from " . Snippet.param) from <>
---     foldMap (mappend " for " . Snippet.param) to <>
---     ")"
---   decoder = Decoders.singleRow (Decoders.column (Decoders.nonNullable Decoders.text))
---   in dynamicallyParameterized snippet decoder True
-
--- TODO : sendMessages'
-
 readMessages :: Statement (T.Text,Int32,Int32) (V.Vector (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value))
 readMessages =
   Statement snippet encoder messageDecoder True
@@ -73,6 +61,19 @@ popMessages =
         contrazip2
           (E.param (E.nonNullable E.text))
           (E.param (E.nonNullable E.int4))
+
+{-
+ Metrics
+    { queueLength        :: Int64
+    , newestMsgAge       :: Int32
+    , oldestMsgAge       :: Int32
+    , totalMessages      :: Int64
+    , scrapeTime         :: UTCTime
+    , queueVisibleLength :: Int64
+-}
+-- getMetrics :: Statement T.Text (Int64, Int32, Int32, Int64, UTCTime, Int64)
+-- getMetrics q =
+--   let snippet = "select * from pgmq.metrics('my_queue')"
 
 archiveMessage :: Statement (T.Text,Int64) Bool
 archiveMessage = [TH.singletonStatement|select pgmq.archive($1::text,$2::int8)::bool|]
