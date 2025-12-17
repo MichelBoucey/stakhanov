@@ -4,6 +4,7 @@ module Database.PostgreSQL.Stakhanov
  -- * Queue management
  , create
  , declare
+ , metrics
  , purge
  , drop
 
@@ -52,7 +53,13 @@ create c t =
 declare :: T.Text -> Queue
 declare t = Queue t Nothing
 
--- metrics :: Queue -> (Either S.SessionError Queue)
+-- | Get queue metrics
+metrics :: C.Connection -> Queue -> IO (Either S.SessionError Queue)
+metrics c Queue{..} = do
+  S.run (S.statement queueName getMetrics) c >>=
+    \case
+      Right m -> pure $ Right $ Queue queueName (Just $ tupleToMetrics m)
+      Left r  -> pure $ Left r
 
 -- | Permanently deletes all messages in a queue.
 -- Returns the number of messages that were deleted.
@@ -93,7 +100,7 @@ read :: C.Connection
   -> Int32
   -> IO (Either S.SessionError (Maybe Messages))
 read c Queue{..} v q =
-  S.run (S.statement (queueName,v,q) readMessages) c >>= \e -> pure $ mMsgs <$> e
+  S.run (S.statement (queueName,v,q) readMessages) c >>= \e -> pure $ maybeMessages <$> e
 
 -- TODO : readWithPoll
 
@@ -104,7 +111,7 @@ pop
   -> Int32
   -> IO (Either S.SessionError (Maybe Messages))
 pop c Queue{..} q =
-  S.run (S.statement (queueName,q) popMessages) c >>= \e -> pure $ mMsgs <$> e
+  S.run (S.statement (queueName,q) popMessages) c >>= \e -> pure $ maybeMessages <$> e
 
 -- | Removes a single requested message from the specified queue
 -- and inserts it into the queue's archive.

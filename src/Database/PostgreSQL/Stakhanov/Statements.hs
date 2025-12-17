@@ -37,13 +37,13 @@ sendMessage =
 sendMessages :: T.Text -> (V.Vector Value) -> Statement () (V.Vector Int64)
 sendMessages q msgs =
   let snippet =
-        "select * from pgmq.send_batch(" <> S.param q <> "," <> jsonArrayEncoder msgs <> ")"
+        "select * from pgmq.send_batch(" <> S.param q <> "," <> jsonbArrayEncoder msgs <> ")"
       decoder = D.rowVector (D.column (D.nonNullable D.int8))
   in dynamicallyParameterized snippet decoder True
 
 readMessages :: Statement (T.Text,Int32,Int32) (V.Vector (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value))
 readMessages =
-  Statement snippet encoder messageDecoder True
+  Statement snippet encoder messagesDecoder True
     where
       snippet = "select msg_id,read_ct,enqueued_at,vt,message,headers from pgmq.read($1,$2,$3)"
       encoder =
@@ -54,7 +54,7 @@ readMessages =
 
 popMessages :: Statement (T.Text,Int32) (V.Vector (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value))
 popMessages =
-  Statement snippet encoder messageDecoder True
+  Statement snippet encoder messagesDecoder True
     where
       snippet = "select msg_id,read_ct,enqueued_at,vt,message,headers from pgmq.pop($1,$2)"
       encoder =
@@ -62,18 +62,21 @@ popMessages =
           (E.param (E.nonNullable E.text))
           (E.param (E.nonNullable E.int4))
 
-{-
- Metrics
-    { queueLength        :: Int64
-    , newestMsgAge       :: Int32
-    , oldestMsgAge       :: Int32
-    , totalMessages      :: Int64
-    , scrapeTime         :: UTCTime
-    , queueVisibleLength :: Int64
--}
--- getMetrics :: Statement T.Text (Int64, Int32, Int32, Int64, UTCTime, Int64)
--- getMetrics q =
---   let snippet = "select * from pgmq.metrics('my_queue')"
+getMetrics :: Statement T.Text (Int64, Int32, Int32, Int64, UTCTime, Int64)
+getMetrics =
+  Statement snippet encoder decoder True
+    where
+      snippet = "select * from pgmq.metrics($1)"
+      encoder = E.param (E.nonNullable E.text)
+      decoder =
+        D.singleRow $
+          (,,,,,) <$>
+            D.column (D.nonNullable D.int8) <*>
+            D.column (D.nonNullable D.int4) <*>
+            D.column (D.nonNullable D.int4) <*>
+            D.column (D.nonNullable D.int8) <*>
+            D.column (D.nonNullable D.timestamptz) <*>
+            D.column (D.nonNullable D.int8)
 
 archiveMessage :: Statement (T.Text,Int64) Bool
 archiveMessage = [TH.singletonStatement|select pgmq.archive($1::text,$2::int8)::bool|]
@@ -81,7 +84,7 @@ archiveMessage = [TH.singletonStatement|select pgmq.archive($1::text,$2::int8)::
 archiveMessages :: T.Text -> (V.Vector Int64) -> Statement () (V.Vector Int64)
 archiveMessages q v =
   let snippet =
-        "select * from pgmq.archive(" <> S.param q <> "," <> jsonArrayEncoder' v <> ")"
+        "select * from pgmq.archive(" <> S.param q <> "," <> int8ArrayEncoder v <> ")"
       decoder = D.rowVector (D.column (D.nonNullable D.int8))
   in dynamicallyParameterized snippet decoder True
 
@@ -91,12 +94,12 @@ deleteMessage = [TH.singletonStatement|select pgmq.delete($1::text,$2::int8)::bo
 deleteMessages :: T.Text -> (V.Vector Int64) -> Statement () (V.Vector Int64)
 deleteMessages q v =
   let snippet =
-        "select * from pgmq.delete(" <> S.param q <> "," <> jsonArrayEncoder' v <> ")"
+        "select * from pgmq.delete(" <> S.param q <> "," <> int8ArrayEncoder v <> ")"
       decoder = D.rowVector (D.column (D.nonNullable D.int8))
   in dynamicallyParameterized snippet decoder True
 
-messageDecoder :: D.Result (V.Vector (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value))
-messageDecoder =
+messagesDecoder :: D.Result (V.Vector (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value))
+messagesDecoder =
   D.rowVector $
     (,,,,,) <$>
       D.column (D.nonNullable D.int8) <*>
