@@ -46,7 +46,7 @@ jsonbArrayEncoder :: V.Vector Value -> S.Snippet
 jsonbArrayEncoder v =
   "ARRAY[" <> M.mconcat (intersperse (S.sql ",") $ V.toList $ S.encoderAndParam (E.nonNullable E.json) <$> v) <> "]::jsonb[]"
 
-int8ArrayEncoder :: V.Vector Int64 -> S.Snippet
-int8ArrayEncoder v =
+bigintArrayEncoder :: V.Vector Int64 -> S.Snippet
+bigintArrayEncoder v =
   "ARRAY[" <> M.mconcat (intersperse (S.sql ",") $ V.toList $ S.encoderAndParam (E.nonNullable E.int8) <$> v) <> "]::bigint[]"
 

@@ -84,7 +84,7 @@ archiveMessage = [TH.singletonStatement|select pgmq.archive($1::text,$2::int8)::
 archiveMessages :: T.Text -> (V.Vector Int64) -> Statement () (V.Vector Int64)
 archiveMessages q v =
   let snippet =
-        "select * from pgmq.archive(" <> S.param q <> "," <> int8ArrayEncoder v <> ")"
+        "select * from pgmq.archive(" <> S.param q <> "," <> bigintArrayEncoder v <> ")"
       decoder = D.rowVector (D.column (D.nonNullable D.int8))
   in dynamicallyParameterized snippet decoder True
 
@@ -94,7 +94,7 @@ deleteMessage = [TH.singletonStatement|select pgmq.delete($1::text,$2::int8)::bo
 deleteMessages :: T.Text -> (V.Vector Int64) -> Statement () (V.Vector Int64)
 deleteMessages q v =
   let snippet =
-        "select * from pgmq.delete(" <> S.param q <> "," <> int8ArrayEncoder v <> ")"
+        "select * from pgmq.delete(" <> S.param q <> "," <> bigintArrayEncoder v <> ")"
       decoder = D.rowVector (D.column (D.nonNullable D.int8))
   in dynamicallyParameterized snippet decoder True
 
