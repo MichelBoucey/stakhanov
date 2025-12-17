@@ -51,15 +51,14 @@ create c t =
 
 -- | Declare an already existing queue
 declare :: T.Text -> Queue
-declare t = Queue t Nothing
+declare = flip Queue Nothing
 
 -- | Get queue metrics
 metrics :: C.Connection -> Queue -> IO (Either S.SessionError Queue)
-metrics c Queue{..} = do
-  S.run (S.statement queueName getMetrics) c >>=
-    \case
-      Right m -> pure $ Right $ Queue queueName (Just $ tupleToMetrics m)
-      Left r  -> pure $ Left r
+metrics c q@Queue{..} =
+  S.run (S.statement queueName getMetrics) c >>= \e -> pure $ addMetrics <$> e
+   where
+     addMetrics m = q { queueMetrics = Just $ tupleToMetrics m }
 
 -- | Permanently deletes all messages in a queue.
 -- Returns the number of messages that were deleted.
