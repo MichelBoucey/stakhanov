@@ -1,8 +1,8 @@
 module Database.PostgreSQL.Stakhanov
- ( conn
+ (
 
  -- * Queue management
- , create
+   create
  , declare
  , metrics
  , purge
@@ -22,8 +22,6 @@ module Database.PostgreSQL.Stakhanov
  , batchArchive
  , batchDelete
 
- -- -- * Utilities
- -- , metrics
  ) where
 
 import           Data.Aeson.Types
@@ -99,12 +97,12 @@ batchSend
   -> IO (Either S.SessionError (V.Vector MsgId))
 batchSend c Queue{..} v = S.run (S.statement () $ sendMessages queueName v) c
 
--- | Read one or more `Messages` from a `Queue`. The VT specifies the amount of time
+-- | Read one or more `Messages` from a `Queue`. The visibility timeout (`VT`) specifies the amount of time
 -- in seconds that the `Message` will be invisible to other consumers after reading.
 read :: C.Connection
   -> Queue
-  -> Int32
-  -> Int32
+  -> VT
+  -> Qty
   -> IO (Either S.SessionError (Maybe Messages))
 read c Queue{..} v q =
   S.run (S.statement (queueName,v,q) readMessages) c >>= \e -> pure $ maybeMessages <$> e
@@ -115,7 +113,7 @@ read c Queue{..} v q =
 pop
   :: C.Connection
   -> Queue
-  -> Int32
+  -> Qty
   -> IO (Either S.SessionError (Maybe Messages))
 pop c Queue{..} q =
   S.run (S.statement (queueName,q) popMessages) c >>= \e -> pure $ maybeMessages <$> e

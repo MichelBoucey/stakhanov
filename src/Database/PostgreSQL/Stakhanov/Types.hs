@@ -13,7 +13,6 @@ data Queue =
     } deriving (Show)
 
 type MsgId = Int64
-
 type VT = Int32
 type Qty = Int32
 type Delay = Int32
