@@ -14,6 +14,10 @@ data Queue =
 
 type MsgId = Int64
 
+type VT = Int32
+type Qty = Int32
+type Delay = Int32
+
 data Message =
   Message
     { msgId             :: MsgId

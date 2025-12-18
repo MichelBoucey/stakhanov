@@ -66,7 +66,7 @@ getMetrics :: Statement T.Text (Int64, Int32, Int32, Int64, UTCTime, Int64)
 getMetrics =
   Statement snippet encoder decoder True
     where
-      snippet = "select * from pgmq.metrics($1)"
+      snippet = "select queue_length,newest_msg_age_sec,oldest_msg_age_sec,total_messages,scrape_time,queue_visible_length from pgmq.metrics($1)"
       encoder = E.param (E.nonNullable E.text)
       decoder =
         D.singleRow $
