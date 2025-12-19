@@ -12,11 +12,6 @@ data Queue =
     , queueMetrics :: Maybe Metrics
     } deriving (Show)
 
-type MsgId = Int64
-type VT = Int32
-type Qty = Int32
-type Delay = Int32
-
 data Message =
   Message
     { msgId             :: MsgId
@@ -40,4 +35,9 @@ data Metrics =
     , scrapeTime         :: UTCTime
     , queueVisibleLength :: Int64
     } deriving (Show)
+
+type MsgId = Int64
+type VT = Int32
+type Qty = Int32
+type Delay = Int32
 

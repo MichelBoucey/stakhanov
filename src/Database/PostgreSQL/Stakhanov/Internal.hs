@@ -10,6 +10,13 @@ import           Database.PostgreSQL.Stakhanov.Types
 import qualified Hasql.DynamicStatements.Snippet     as S
 import qualified Hasql.Encoders                      as E
 
+isJSON :: Value -> Bool
+isJSON (Object _) = True
+isJSON _          = False
+
+allJSON :: Vector Value -> Bool
+allJSON = V.all isJSON
+
 maybeMessages
   :: Vector (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value)
   -> Maybe Messages

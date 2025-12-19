@@ -86,7 +86,10 @@ send
   -> Queue
   -> Value
   -> IO (Either S.SessionError MsgId)
-send c Queue{..} v = S.run (S.statement (queueName,v) sendMessage) c
+send c Queue{..} v =
+  if isJSON v
+    then S.run (S.statement (queueName,v) sendMessage) c
+    else fail "The Aeson Value must be an Object, i.e. a JSON"
 
 -- | Send on or more `Messages` to a `Queue`.
 batchSend
@@ -94,7 +97,10 @@ batchSend
   -> Queue
   -> V.Vector Value
   -> IO (Either S.SessionError (V.Vector MsgId))
-batchSend c Queue{..} v = S.run (S.statement () $ sendMessages queueName v) c
+batchSend c Queue{..} v =
+  if allJSON v
+    then S.run (S.statement () $ sendMessages queueName v) c
+    else fail "The Aeson Values must all be Objects, i.e. all JSON"
 
 -- | Read one or more `Messages` from a `Queue`. The visibility timeout (`VT`) specifies the amount of time
 -- in seconds that the `Message` will be invisible to other consumers after reading.
