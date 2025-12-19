@@ -28,7 +28,6 @@ import           Data.Aeson.Types
 import           Data.Int
 import           Data.Text                                as T hiding (drop)
 import qualified Data.Vector                              as V
-import           Database.PostgreSQL.Stakhanov.Connection
 import           Database.PostgreSQL.Stakhanov.Internal
 import           Database.PostgreSQL.Stakhanov.Statements
 import           Database.PostgreSQL.Stakhanov.Types
