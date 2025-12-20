@@ -65,6 +65,8 @@ metrics c q@Queue{..} =
    where
      addMetrics m = q { queueMetrics = Just $ tupleToMetrics m }
 
+-- TODO : allMetrics :: Queue -> IO (Either S.SessionError (Vector Queue)
+
 -- | Permanently deletes all `Messages` in a `Queue`.
 -- Returns the number of `Messages` that were deleted.
 purge
@@ -86,10 +88,10 @@ send
   -> Queue
   -> Value
   -> IO (Either S.SessionError MsgId)
-send c Queue{..} v =
-  if isJSON v
-    then S.run (S.statement (queueName,v) sendMessage) c
-    else fail "The Aeson Value must be an Object, i.e. a JSON"
+send c Queue{..} v@(Object _) = S.run (S.statement (queueName,v) sendMessage) c
+send _ _         _            = fail "The Aeson Value must be an Object, i.e. a JSON"
+
+-- send' :: C.Connection -> Queue -> Message -> Maybe Headers -> Maybe Delay -> (Either S.SessionError MsgId)
 
 -- | Send on or more `Messages` to a `Queue`.
 batchSend
@@ -100,7 +102,7 @@ batchSend
 batchSend c Queue{..} v =
   if allJSON v
     then S.run (S.statement () $ sendMessages queueName v) c
-    else fail "The Aeson Values must all be Objects, i.e. all JSON"
+    else fail "All Aeson Values of the Vector must be Objects, i.e. all JSON"
 
 -- | Read one or more `Messages` from a `Queue`. The visibility timeout (`VT`) specifies the amount of time
 -- in seconds that the `Message` will be invisible to other consumers after reading.
