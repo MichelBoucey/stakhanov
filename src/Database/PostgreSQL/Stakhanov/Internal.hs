@@ -49,6 +49,15 @@ tupleToMessage (e1,e2,e3,e4,e5,e6) =
     , message           = e5
     , headers           = e6 }
 
+maybeHeaders :: Maybe Value -> S.Snippet
+maybeHeaders (Just v) = S.encoderAndParam (E.nonNullable E.json) v <> ","
+maybeHeaders Nothing  = mempty
+ 
+maybeDelay :: Maybe Delay -> S.Snippet
+maybeDelay (Just (InSeconds s))     = S.encoderAndParam (E.nonNullable E.int4) s
+maybeDelay (Just (WithTimestamp t)) = S.encoderAndParam (E.nonNullable E.timestamptz) t
+maybeDelay Nothing                  = mempty
+
 jsonbArrayEncoder :: V.Vector Value -> S.Snippet
 jsonbArrayEncoder v =
   "ARRAY[" <> M.mconcat (intersperse (S.sql ",") $ V.toList $ S.encoderAndParam (E.nonNullable E.json) <$> v) <> "]::jsonb[]"

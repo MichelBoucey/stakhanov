@@ -36,8 +36,9 @@ data Metrics =
     , queueVisibleLength :: Int64
     } deriving (Show)
 
+data Delay = InSeconds Int32 | WithTimestamp UTCTime
+
 type MsgId = Int64
 type VT = Int32
 type Qty = Int32
-type Delay = Int32
 

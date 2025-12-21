@@ -13,6 +13,7 @@ import           Hasql.DynamicStatements.Statement
 import qualified Hasql.Encoders                         as E
 import           Hasql.Statement
 import qualified Hasql.TH                               as TH
+import Database.PostgreSQL.Stakhanov.Types
 
 createQueue :: Statement T.Text ()
 createQueue = [TH.resultlessStatement|select from pgmq.create($1::text)|]
@@ -34,11 +35,19 @@ sendMessage =
           (E.param (E.nonNullable E.jsonb))
       decoder = D.singleRow $ D.column $ D.nonNullable D.int8
 
+sendMessage' :: T.Text -> Value -> Maybe Value -> Maybe Delay -> Statement () Int64
+sendMessage' q v mv mi =
+  let snippet =
+        "select * from pgmq.send(" <> S.param q <> ","
+        <> S.param v <> "," <> maybeHeaders mv <> maybeDelay mi <> ")"
+      decoder = D.singleRow $ D.column $ D.nonNullable D.int8
+  in dynamicallyParameterized snippet decoder True
+
 sendMessages :: T.Text -> (V.Vector Value) -> Statement () (V.Vector Int64)
 sendMessages q msgs =
   let snippet =
         "select * from pgmq.send_batch(" <> S.param q <> "," <> jsonbArrayEncoder msgs <> ")"
-      decoder = D.rowVector (D.column (D.nonNullable D.int8))
+      decoder = D.rowVector $ D.column $ D.nonNullable D.int8
   in dynamicallyParameterized snippet decoder True
 
 readMessages :: Statement (T.Text,Int32,Int32) (V.Vector (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value))
