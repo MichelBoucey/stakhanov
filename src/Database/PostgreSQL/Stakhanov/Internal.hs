@@ -27,7 +27,7 @@ maybeMessages v =
       else Just $ Messages $ tupleToMessage <$> v
 
 tupleToQueueWithMetrics
-  :: (T.Text, Int64, Int32, Int32, Int64, UTCTime, Int64)
+  :: (T.Text, Int64, Maybe Int32, Maybe Int32, Int64, UTCTime, Int64)
   -> Queue
 tupleToQueueWithMetrics (e1,e2,e3,e4,e5,e6,e7) =
   Queue
@@ -36,7 +36,7 @@ tupleToQueueWithMetrics (e1,e2,e3,e4,e5,e6,e7) =
    }
 
 tupleToMetrics
- :: (Int64, Int32, Int32, Int64, UTCTime, Int64)
+ :: (Int64, Maybe Int32, Maybe Int32, Int64, UTCTime, Int64)
  -> Metrics
 tupleToMetrics (e1,e2,e3,e4,e5,e6) =
   Metrics

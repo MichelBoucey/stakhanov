@@ -62,7 +62,7 @@ popMessages =
           (E.param (E.nonNullable E.text))
           (E.param (E.nonNullable E.int4))
 
-getMetrics :: Statement T.Text (Int64, Int32, Int32, Int64, UTCTime, Int64)
+getMetrics :: Statement T.Text (Int64, Maybe Int32, Maybe Int32, Int64, UTCTime, Int64)
 getMetrics =
   Statement snippet encoder decoder True
     where
@@ -72,13 +72,13 @@ getMetrics =
         D.singleRow $
           (,,,,,) <$>
             D.column (D.nonNullable D.int8) <*>
-            D.column (D.nonNullable D.int4) <*>
-            D.column (D.nonNullable D.int4) <*>
+            D.column (D.nullable D.int4) <*>
+            D.column (D.nullable D.int4) <*>
             D.column (D.nonNullable D.int8) <*>
             D.column (D.nonNullable D.timestamptz) <*>
             D.column (D.nonNullable D.int8)
 
-getAllMetrics :: Statement () (V.Vector (T.Text, Int64, Int32, Int32, Int64, UTCTime, Int64))
+getAllMetrics :: Statement () (V.Vector (T.Text, Int64, Maybe Int32, Maybe Int32, Int64, UTCTime, Int64))
 getAllMetrics =
   Statement sql E.noParams decoder True
     where
@@ -88,8 +88,8 @@ getAllMetrics =
           (,,,,,,) <$>
             D.column (D.nonNullable D.text) <*>
             D.column (D.nonNullable D.int8) <*>
-            D.column (D.nonNullable D.int4) <*>
-            D.column (D.nonNullable D.int4) <*>
+            D.column (D.nullable D.int4) <*>
+            D.column (D.nullable D.int4) <*>
             D.column (D.nonNullable D.int8) <*>
             D.column (D.nonNullable D.timestamptz) <*>
             D.column (D.nonNullable D.int8)
