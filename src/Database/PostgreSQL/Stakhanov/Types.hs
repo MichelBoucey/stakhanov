@@ -29,8 +29,8 @@ newtype Messages =
 data Metrics =
   Metrics
     { queueLength        :: Int64
-    , newestMsgAge       :: Int32
-    , oldestMsgAge       :: Int32
+    , newestMsgAge       :: Maybe Int32
+    , oldestMsgAge       :: Maybe Int32
     , totalMessages      :: Int64
     , scrapeTime         :: UTCTime
     , queueVisibleLength :: Int64

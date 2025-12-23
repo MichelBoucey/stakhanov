@@ -4,6 +4,7 @@ import           Data.Aeson.Types
 import           Data.Int
 import           Data.List                           (intersperse)
 import qualified Data.Monoid                         as M
+import qualified Data.Text                           as T
 import           Data.Time
 import           Data.Vector                         as V
 import           Database.PostgreSQL.Stakhanov.Types
@@ -25,8 +26,17 @@ maybeMessages v =
       then Nothing
       else Just $ Messages $ tupleToMessage <$> v
 
+tupleToQueueWithMetrics
+  :: (T.Text, Int64, Maybe Int32, Maybe Int32, Int64, UTCTime, Int64)
+  -> Queue
+tupleToQueueWithMetrics (e1,e2,e3,e4,e5,e6,e7) =
+  Queue
+   { queueName    = e1
+   , queueMetrics = Just $ tupleToMetrics (e2,e3,e4,e5,e6,e7)
+   }
+
 tupleToMetrics
- :: (Int64, Int32, Int32, Int64, UTCTime, Int64)
+ :: (Int64, Maybe Int32, Maybe Int32, Int64, UTCTime, Int64)
  -> Metrics
 tupleToMetrics (e1,e2,e3,e4,e5,e6) =
   Metrics

@@ -5,6 +5,7 @@ module Database.PostgreSQL.Stakhanov
    create
  , declare
  , metrics
+ , allMetrics
  , purge
  , drop
 
@@ -71,7 +72,10 @@ metrics c q@Queue{..} =
    where
      addMetrics m = q { queueMetrics = Just $ tupleToMetrics m }
 
--- TODO : allMetrics :: Queue -> IO (Either S.SessionError (Vector Queue)
+-- | Get `Metrics` of all created `Queue`s
+allMetrics :: C.Connection -> IO (Either S.SessionError (V.Vector Queue))
+allMetrics c =
+  S.run (S.statement () getAllMetrics) c >>= \e -> pure $ (tupleToQueueWithMetrics <$>) <$> e
 
 -- | Permanently deletes all `Messages` in a `Queue`.
 -- Returns the number of `Messages` that were deleted.
