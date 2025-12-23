@@ -7,13 +7,13 @@ import qualified Data.Text                              as T
 import           Data.Time
 import qualified Data.Vector                            as V
 import           Database.PostgreSQL.Stakhanov.Internal
+import           Database.PostgreSQL.Stakhanov.Types
 import qualified Hasql.Decoders                         as D
 import qualified Hasql.DynamicStatements.Snippet        as S
 import           Hasql.DynamicStatements.Statement
 import qualified Hasql.Encoders                         as E
 import           Hasql.Statement
 import qualified Hasql.TH                               as TH
-import Database.PostgreSQL.Stakhanov.Types
 
 createQueue :: Statement T.Text ()
 createQueue = [TH.resultlessStatement|select from pgmq.create($1::text)|]
