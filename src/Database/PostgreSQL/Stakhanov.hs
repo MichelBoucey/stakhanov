@@ -109,7 +109,10 @@ send'
   -> Maybe Value  -- ^ Optional message headers/metadata (JSON)
   -> Maybe Delay  -- ^ Time before the message becomes visible
   -> IO (Either S.SessionError MsgId)
-send' c Queue{..} m mh md = S.run (S.statement () $ sendMessage' queueName m mh md) c
+send' c Queue{..} v@(Object _) mv@(Just (Object _)) md =
+  S.run (S.statement () $ sendMessage' queueName v mv md) c
+send' _ _         _            _                    _  =
+  fail "The Aeson Values must be Objects, i.e. JSON"
 
 -- | Send on or more `Messages` to a `Queue`.
 batchSend
