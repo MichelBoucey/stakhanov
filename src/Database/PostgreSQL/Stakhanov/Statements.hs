@@ -7,6 +7,7 @@ import qualified Data.Text                              as T
 import           Data.Time
 import qualified Data.Vector                            as V
 import           Database.PostgreSQL.Stakhanov.Internal
+import           Database.PostgreSQL.Stakhanov.Types
 import qualified Hasql.Decoders                         as D
 import qualified Hasql.DynamicStatements.Snippet        as S
 import           Hasql.DynamicStatements.Statement
@@ -25,27 +26,35 @@ dropQueue = [TH.singletonStatement|select pgmq.drop_queue($1::text)::bool|]
 
 sendMessage :: Statement (T.Text,Value) Int64
 sendMessage =
-  Statement snippet encoder decoder True
+  Statement sql encoder decoder True
     where
-      snippet = "select * from pgmq.send($1::text,$2::jsonb)"
+      sql = "select * from pgmq.send($1::text,$2::jsonb)"
       encoder =
         contrazip2
           (E.param (E.nonNullable E.text))
           (E.param (E.nonNullable E.jsonb))
       decoder = D.singleRow $ D.column $ D.nonNullable D.int8
 
+sendMessage' :: T.Text -> Value -> Maybe Value -> Maybe Delay -> Statement () Int64
+sendMessage' q v mv mi =
+  let snippet =
+        "select * from pgmq.send(" <> S.param q <> ","
+        <> S.param v <> "," <> maybeHeaders mv <> maybeDelay mi <> ")"
+      decoder = D.singleRow $ D.column $ D.nonNullable D.int8
+  in dynamicallyParameterized snippet decoder True
+
 sendMessages :: T.Text -> (V.Vector Value) -> Statement () (V.Vector Int64)
 sendMessages q msgs =
   let snippet =
         "select * from pgmq.send_batch(" <> S.param q <> "," <> jsonbArrayEncoder msgs <> ")"
-      decoder = D.rowVector (D.column (D.nonNullable D.int8))
+      decoder = D.rowVector $ D.column $ D.nonNullable D.int8
   in dynamicallyParameterized snippet decoder True
 
 readMessages :: Statement (T.Text,Int32,Int32) (V.Vector (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value))
 readMessages =
-  Statement snippet encoder messagesDecoder True
+  Statement sql encoder messagesDecoder True
     where
-      snippet = "select msg_id,read_ct,enqueued_at,vt,message,headers from pgmq.read($1,$2,$3)"
+      sql = "select msg_id,read_ct,enqueued_at,vt,message,headers from pgmq.read($1,$2,$3)"
       encoder =
         contrazip3
           (E.param (E.nonNullable E.text))
@@ -54,9 +63,9 @@ readMessages =
 
 popMessages :: Statement (T.Text,Int32) (V.Vector (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value))
 popMessages =
-  Statement snippet encoder messagesDecoder True
+  Statement sql encoder messagesDecoder True
     where
-      snippet = "select msg_id,read_ct,enqueued_at,vt,message,headers from pgmq.pop($1,$2)"
+      sql = "select msg_id,read_ct,enqueued_at,vt,message,headers from pgmq.pop($1,$2)"
       encoder =
         contrazip2
           (E.param (E.nonNullable E.text))
@@ -64,9 +73,9 @@ popMessages =
 
 getMetrics :: Statement T.Text (Int64, Maybe Int32, Maybe Int32, Int64, UTCTime, Int64)
 getMetrics =
-  Statement snippet encoder decoder True
+  Statement sql encoder decoder True
     where
-      snippet = "select queue_length,newest_msg_age_sec,oldest_msg_age_sec,total_messages,scrape_time,queue_visible_length from pgmq.metrics($1)"
+      sql = "select queue_length,newest_msg_age_sec,oldest_msg_age_sec,total_messages,scrape_time,queue_visible_length from pgmq.metrics($1)"
       encoder = E.param (E.nonNullable E.text)
       decoder =
         D.singleRow $
