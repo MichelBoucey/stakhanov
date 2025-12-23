@@ -60,7 +60,7 @@ tupleToMessage (e1,e2,e3,e4,e5,e6) =
     , headers           = e6 }
 
 maybeHeaders :: Maybe Value -> S.Snippet
-maybeHeaders (Just v) = S.encoderAndParam (E.nonNullable E.json) v <> ","
+maybeHeaders (Just v) = S.encoderAndParam (E.nonNullable E.json) v <> "::jsonb,"
 maybeHeaders Nothing  = mempty
  
 maybeDelay :: Maybe Delay -> S.Snippet
