@@ -102,6 +102,8 @@ send
 send c Queue{..} v@(Object _) = S.run (S.statement (queueName,v) sendMessage) c
 send _ _         _            = fail "The Aeson Value must be an Object, i.e. a JSON"
 
+-- | Send a single `Message` to a `Queue` with optional metadata (a JSON named headers)
+-- and an optional `Delay`. Returns the `MsgId` of the just created `Message`.
 send'
   :: C.Connection -- ^ The connection to PostgreSQL
   -> Queue        -- ^ The queue to work with
