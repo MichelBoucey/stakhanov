@@ -109,7 +109,7 @@ send'
   -> Queue        -- ^ The queue to work with
   -> Value        -- ^ The message to send to the queue (JSON)
   -> Maybe Value  -- ^ Optional message headers/metadata (JSON)
-  -> Maybe Delay  -- ^ Time before the message becomes visible
+  -> Maybe Delay  -- ^ Optional time before the message becomes visible
   -> IO (Either S.SessionError MsgId)
 send' c Queue{..} v@(Object _) mv@(Just (Object _)) md =
   S.run (S.statement () $ sendMessage' queueName v mv md) c
