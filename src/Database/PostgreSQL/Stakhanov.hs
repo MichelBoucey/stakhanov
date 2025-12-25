@@ -52,6 +52,7 @@ create c t =
       Left r   -> pure $ Left r
 -- | Create an unlogged new `Queue`. This is useful
 -- when write throughput is more important that durability. 
+-- See [PostgreSQL documentation about unlogged tables](https://www.postgresql.org/docs/current/sql-createtable.html#SQL-CREATETABLE-UNLOGGED).
 createUnlogged
   :: C.Connection -- ^ The connection to PostgreSQL
   -> T.Text       -- ^ The name of the queue to create
