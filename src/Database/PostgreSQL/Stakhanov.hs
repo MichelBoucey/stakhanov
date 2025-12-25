@@ -3,6 +3,7 @@ module Database.PostgreSQL.Stakhanov
 
  -- * Queue management
    create
+ , createUnlogged
  , declare
  , purge
  , drop
@@ -46,6 +47,18 @@ create
   -> IO (Either S.SessionError Queue)
 create c t =
   S.run (S.statement t createQueue) c >>=
+    \case
+      Right () -> pure $ Right $ Queue t Nothing
+      Left r   -> pure $ Left r
+-- | Create an unlogged new `Queue`. This is useful
+-- when write throughput is more important that durability. 
+-- See [PostgreSQL documentation about unlogged tables](https://www.postgresql.org/docs/current/sql-createtable.html#SQL-CREATETABLE-UNLOGGED).
+createUnlogged
+  :: C.Connection -- ^ The connection to PostgreSQL
+  -> T.Text       -- ^ The name of the queue to create
+  -> IO (Either S.SessionError Queue)
+createUnlogged c t =
+  S.run (S.statement t createUnloggedQueue) c >>=
     \case
       Right () -> pure $ Right $ Queue t Nothing
       Left r   -> pure $ Left r
