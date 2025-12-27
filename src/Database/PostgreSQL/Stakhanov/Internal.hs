@@ -59,6 +59,10 @@ tupleToMessage (e1,e2,e3,e4,e5,e6) =
     , message           = e5
     , headers           = e6 }
 
+maybeComma :: Maybe a -> S.Snippet
+maybeComma (Just _) = ","
+maybeComma Nothing = mempty
+
 maybeHeaders :: Maybe Value -> S.Snippet
 maybeHeaders (Just v) = S.encoderAndParam (E.nonNullable E.json) v <> "::jsonb,"
 maybeHeaders Nothing  = mempty

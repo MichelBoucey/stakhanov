@@ -3,6 +3,7 @@ module Database.PostgreSQL.Stakhanov.Statements where
 import           Contravariant.Extras.Contrazip         (contrazip2, contrazip3)
 import           Data.Aeson
 import           Data.Int
+import           Data.Maybe                             (fromMaybe)
 import qualified Data.Text                              as T
 import           Data.Time
 import qualified Data.Vector                            as V
@@ -50,6 +51,14 @@ sendMessages :: T.Text -> (V.Vector Value) -> Statement () (V.Vector Int64)
 sendMessages q msgs =
   let snippet =
         "select * from pgmq.send_batch(" <> S.param q <> "," <> jsonbArrayEncoder msgs <> ")"
+      decoder = D.rowVector $ D.column $ D.nonNullable D.int8
+  in dynamicallyParameterized snippet decoder True
+
+sendMessages' :: T.Text -> (V.Vector Value) -> Maybe (V.Vector Value) -> Maybe Delay -> Statement () (V.Vector Int64)
+sendMessages' q vv mvv md =
+  let snippet =
+        "select * from pgmq.send_batch(" <> S.param q <> "," <> jsonbArrayEncoder vv
+        <> (fromMaybe mempty $ (mappend "," . jsonbArrayEncoder) <$> mvv) <> maybeComma md <> maybeDelay md <> ")"
       decoder = D.rowVector $ D.column $ D.nonNullable D.int8
   in dynamicallyParameterized snippet decoder True
 

@@ -12,6 +12,7 @@ module Database.PostgreSQL.Stakhanov
  , send
  , send'
  , batchSend
+ , batchSend'
 
  -- * Reading Messages
  , read
@@ -27,6 +28,7 @@ module Database.PostgreSQL.Stakhanov
 
 import           Data.Aeson.Types
 import           Data.Int
+import           Data.Maybe
 import           Data.Text                                as T hiding (drop)
 import qualified Data.Vector                              as V
 import           Database.PostgreSQL.Stakhanov.Internal
@@ -119,7 +121,22 @@ batchSend c Queue{..} v =
     then S.run (S.statement () $ sendMessages queueName v) c
     else fail "All Aeson Values of the Vector must be Objects, i.e. all JSON"
 
--- TODO : batchSend'
+-- | Send on or more `Messages` to a `Queue` with optional headers (a JSON object of metadata)
+-- and an optional `Delay`. Returns `MsgId`s of just created `Messages`.
+batchSend'
+  :: C.Connection           -- ^ The connection to PostgreSQL
+  -> Queue                  -- ^ The queue to work with
+  -> V.Vector Value         -- ^ A vector of messages to send to the queue
+  -> Maybe (V.Vector Value) -- ^ Optional vector of headers/metadata (JSON). Its length must be the same as the vector of messages
+  -> Maybe Delay            -- ^ Optional time before messages becomes visible
+  -> IO (Either S.SessionError (V.Vector MsgId))
+batchSend' c Queue{..} vv mvv md =
+  if allJSON vv && maybe True allJSON mvv
+    then
+      if isNothing mvv || isJust mvv && V.length vv == V.length (fromJust mvv)
+        then S.run (S.statement () $ sendMessages' queueName vv mvv md) c
+        else fail "The vector of headers must be equal to the vector of messages"
+    else fail "All Aeson Values of Vectors must be Objects, i.e. all JSON"
 
 -- | Read one or more `Messages` from a `Queue`. The visibility timeout (`VT`) specifies the amount of time
 -- in seconds that the `Message` will be invisible to other consumers after reading.
