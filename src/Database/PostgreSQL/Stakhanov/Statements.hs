@@ -55,7 +55,7 @@ sendMessages' :: T.Text -> (V.Vector Value) -> Maybe (V.Vector Value) -> Maybe D
 sendMessages' q vv mvv md =
   let snippet =
         "select * from pgmq.send_batch(" <> S.param q <> "," <> jsonbArrayEncoder vv
-        <> "," <> (fromMaybe mempty $ jsonbArrayEncoder <$> mvv) <> maybeDelay md <> ")"
+        <> (fromMaybe mempty $ (mappend "," . jsonbArrayEncoder) <$> mvv) <> maybeComma md <> maybeDelay md <> ")"
       decoder = D.rowVector $ D.column $ D.nonNullable D.int8
   in dynamicallyParameterized snippet decoder True
 

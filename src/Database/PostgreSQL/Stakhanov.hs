@@ -118,10 +118,11 @@ batchSend'
   -> Maybe Delay            -- ^ Optional time before messages becomes visible
   -> IO (Either S.SessionError (V.Vector MsgId))
 batchSend' c Queue{..} vv mvv md =
-  if allJSON vv && (fromMaybe True $ allJSON <$> mvv)
-    then if V.length vv == (fromMaybe 0 $ V.length <$> mvv)
-           then S.run (S.statement () $ sendMessages' queueName vv mvv md) c
-           else fail "The vector of headers must be equal to the vector of messages"
+  if allJSON vv && maybe True allJSON mvv
+    then
+      if isNothing mvv || isJust mvv && V.length vv == V.length (fromJust mvv)
+        then S.run (S.statement () $ sendMessages' queueName vv mvv md) c
+        else fail "The vector of headers must be equal to the vector of messages"
     else fail "All Aeson Values of Vectors must be Objects, i.e. all JSON"
 
 -- | Read one or more `Messages` from a `Queue`. The visibility timeout (`VT`) specifies the amount of time
