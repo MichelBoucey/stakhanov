@@ -48,7 +48,7 @@ create
 create c t =
   S.run (S.statement t createQueue) c >>=
     \case
-      Right () -> pure $ Right $ Queue t Nothing
+      Right () -> pure $ Right $ Queue t Nothing Nothing
       Left r   -> pure $ Left r
 -- | Create an unlogged new `Queue`. This is useful
 -- when write throughput is more important that durability. 
@@ -60,14 +60,14 @@ createUnlogged
 createUnlogged c t =
   S.run (S.statement t createUnloggedQueue) c >>=
     \case
-      Right () -> pure $ Right $ Queue t Nothing
+      Right () -> pure $ Right $ Queue t Nothing Nothing
       Left r   -> pure $ Left r
 
 -- | Declare an already existing `Queue`.
 declare
   :: T.Text -- ^ The name of the queue to declare
   -> Queue
-declare = flip Queue Nothing
+declare t = Queue t Nothing Nothing
 
 -- | Permanently deletes all `Messages` in a `Queue`.
 -- Returns the number of `Messages` that were deleted.

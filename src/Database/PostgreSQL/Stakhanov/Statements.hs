@@ -21,6 +21,8 @@ createQueue = [TH.resultlessStatement|select from pgmq.create($1::text)|]
 createUnloggedQueue :: Statement T.Text ()
 createUnloggedQueue = [TH.resultlessStatement|select from pgmq.create_unlogged($1::text)|]
 
+-- select * from pgmq.list_queues();
+
 purgeQueue :: Statement T.Text Int64
 purgeQueue = [TH.singletonStatement|select pgmq.purge_queue($1::text)::int8|]
 

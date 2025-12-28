@@ -47,31 +47,31 @@ allMetrics c =
 
 -- | Number of messages currently in the queue.
 getQueueLength :: Queue -> Maybe Int64
-getQueueLength (Queue _ (Just Metrics { .. })) = Just queueLength
-getQueueLength (Queue _ Nothing)               = Nothing
+getQueueLength (Queue _ _ (Just Metrics { .. })) = Just queueLength
+getQueueLength (Queue _ _ Nothing)               = Nothing
 
 -- | Age of the newest message in the queue, in seconds.
 getNewestMsgAge :: Queue -> Maybe Int32
-getNewestMsgAge (Queue _ (Just Metrics{..})) = newestMsgAge
-getNewestMsgAge (Queue _ Nothing)            = Nothing
+getNewestMsgAge (Queue _ _ (Just Metrics{..})) = newestMsgAge
+getNewestMsgAge (Queue _ _ Nothing)            = Nothing
 
 -- | Age of the oldest message in the queue, in seconds.
 getOldestMsgAge :: Queue -> Maybe Int32
-getOldestMsgAge (Queue _ (Just Metrics{..})) = oldestMsgAge
-getOldestMsgAge (Queue _ Nothing)            = Nothing
+getOldestMsgAge (Queue _ _ (Just Metrics{..})) = oldestMsgAge
+getOldestMsgAge (Queue _ _ Nothing)            = Nothing
 
 -- | Total number of messages that have passed through the queue over all time.
 getTotalMessages :: Queue -> Maybe Int64
-getTotalMessages (Queue _ (Just Metrics{..})) = Just totalMessages
-getTotalMessages (Queue _ Nothing)            = Nothing
+getTotalMessages (Queue _ _ (Just Metrics{..})) = Just totalMessages
+getTotalMessages (Queue _ _ Nothing)            = Nothing
 
 -- | The current timestamp
 getScrapeTime :: Queue -> Maybe UTCTime
-getScrapeTime (Queue _ (Just Metrics{..})) = Just scrapeTime
-getScrapeTime (Queue _ Nothing)            = Nothing
+getScrapeTime (Queue _ _ (Just Metrics{..})) = Just scrapeTime
+getScrapeTime (Queue _ _ Nothing)            = Nothing
 
 -- | Number of messages currently visible (vt <= now).
 getQueueVisibleLength :: Queue -> Maybe Int64
-getQueueVisibleLength (Queue _ (Just Metrics{..})) = Just queueVisibleLength
-getQueueVisibleLength (Queue _ Nothing)            = Nothing
+getQueueVisibleLength (Queue _ _ (Just Metrics{..})) = Just queueVisibleLength
+getQueueVisibleLength (Queue _ _ Nothing)            = Nothing
 
