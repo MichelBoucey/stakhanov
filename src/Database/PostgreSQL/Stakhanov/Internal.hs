@@ -32,6 +32,7 @@ tupleToQueueWithMetrics
 tupleToQueueWithMetrics (e1,e2,e3,e4,e5,e6,e7) =
   Queue
    { queueName    = e1
+   , queueDetails = Nothing
    , queueMetrics = Just $ tupleToMetrics (e2,e3,e4,e5,e6,e7)
    }
 
