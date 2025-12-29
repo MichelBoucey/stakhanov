@@ -22,6 +22,20 @@ createQueue = [TH.resultlessStatement|select from pgmq.create($1::text)|]
 createUnloggedQueue :: Statement T.Text ()
 createUnloggedQueue = [TH.resultlessStatement|select from pgmq.create_unlogged($1::text)|]
 
+getQueuesDetails :: Statement () (V.Vector (T.Text, (UTCTime, Bool, Bool)))
+getQueuesDetails =
+  Statement sql E.noParams decoder True
+    where
+      sql = "select queue_name,created_at,is_partitioned,is_unlogged from pgmq.list_queues()"
+      decoder =
+        D.rowVector $
+          (,) <$>
+            D.column (D.nonNullable D.text) <*>
+              ((,,) <$>
+                D.column (D.nonNullable D.timestamptz) <*>
+                D.column (D.nonNullable D.bool) <*>
+                D.column (D.nonNullable D.bool))
+
 purgeQueue :: Statement T.Text Int64
 purgeQueue = [TH.singletonStatement|select pgmq.purge_queue($1::text)::int8|]
 

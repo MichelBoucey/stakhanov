@@ -9,7 +9,16 @@ import           Data.Vector
 data Queue =
   Queue
     { queueName    :: T.Text
+    , queueDetails :: Maybe Details
     , queueMetrics :: Maybe Metrics
+    } deriving (Show)
+
+data Details =
+  Details
+    {
+      createdAt     :: UTCTime
+    , isPartitioned :: Bool
+    , isUnlogged    :: Bool
     } deriving (Show)
 
 data Message =

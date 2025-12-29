@@ -26,12 +26,21 @@ maybeMessages v =
       then Nothing
       else Just $ Messages $ tupleToMessage <$> v
 
+tupleToDetails :: (UTCTime,Bool,Bool) -> Details
+tupleToDetails (e1,e2,e3) =
+  Details
+    { createdAt     = e1
+    , isPartitioned = e2
+    , isUnlogged    = e3
+    }
+
 tupleToQueueWithMetrics
   :: (T.Text, Int64, Maybe Int32, Maybe Int32, Int64, UTCTime, Int64)
   -> Queue
 tupleToQueueWithMetrics (e1,e2,e3,e4,e5,e6,e7) =
   Queue
    { queueName    = e1
+   , queueDetails = Nothing
    , queueMetrics = Just $ tupleToMetrics (e2,e3,e4,e5,e6,e7)
    }
 
@@ -66,7 +75,7 @@ maybeComma Nothing = mempty
 maybeHeaders :: Maybe Value -> S.Snippet
 maybeHeaders (Just v) = S.encoderAndParam (E.nonNullable E.json) v <> "::jsonb,"
 maybeHeaders Nothing  = mempty
- 
+
 maybeDelay :: Maybe Delay -> S.Snippet
 maybeDelay (Just (InSeconds s))     = S.encoderAndParam (E.nonNullable E.int4) s
 maybeDelay (Just (WithTimestamp t)) = S.encoderAndParam (E.nonNullable E.timestamptz) t
