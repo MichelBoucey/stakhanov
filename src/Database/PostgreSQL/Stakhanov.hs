@@ -23,6 +23,9 @@ module Database.PostgreSQL.Stakhanov
  , batchArchive
  , batchDelete
 
+ -- * Utilities
+ , listQueues
+
  ) where
 
 import           Data.Aeson.Types
@@ -51,7 +54,7 @@ create c t =
       Right () -> pure $ Right $ Queue t Nothing Nothing
       Left r   -> pure $ Left r
 -- | Create an unlogged new `Queue`. This is useful
--- when write throughput is more important that durability. 
+-- when write throughput is more important that durability.
 -- See [PostgreSQL documentation about unlogged tables](https://www.postgresql.org/docs/current/sql-createtable.html#SQL-CREATETABLE-UNLOGGED).
 createUnlogged
   :: C.Connection -- ^ The connection to PostgreSQL
@@ -176,4 +179,13 @@ batchDelete
   -> V.Vector MsgId -- ^ A Vector of message IDs to delete
   -> IO (Either S.SessionError (V.Vector MsgId))
 batchDelete c Queue{..} v = S.run (S.statement () $ deleteMessages queueName v) c
+
+listQueues
+  :: C.Connection -- ^ The connection to PostgreSQL
+  -> IO (Either S.SessionError (V.Vector Queue))
+listQueues c =
+  S.run (S.statement () getQueuesDetails) c >>=
+    \e -> pure $ (toQueue <$>) <$> e
+  where
+    toQueue r = Queue { queueName = fst r, queueDetails = Just (tupleToDetails $ snd r), queueMetrics = Nothing }
 
