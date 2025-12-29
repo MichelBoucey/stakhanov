@@ -149,6 +149,12 @@ deleteMessages q v =
       decoder = D.rowVector (D.column (D.nonNullable D.int8))
   in dynamicallyParameterized snippet decoder True
 
+setMessagesVT :: T.Text -> V.Vector Int64 -> Int32 -> Statement () (V.Vector (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value))
+setMessagesVT q v s =
+  let snippet = "select * from pgmq.set_vt(" <> S.param q <> ","
+                <> bigintArrayEncoder v <> "," <> S.param s <> ")"
+  in dynamicallyParameterized snippet messagesDecoder True
+
 messagesDecoder :: D.Result (V.Vector (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value))
 messagesDecoder =
   D.rowVector $

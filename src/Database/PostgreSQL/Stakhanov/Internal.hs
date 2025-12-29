@@ -24,7 +24,7 @@ maybeMessages
 maybeMessages v =
     if V.null v
       then Nothing
-      else Just $ Messages $ tupleToMessage <$> v
+      else Just $ tupleToMessage <$> v
 
 tupleToDetails :: (UTCTime,Bool,Bool) -> Details
 tupleToDetails (e1,e2,e3) =
@@ -70,7 +70,7 @@ tupleToMessage (e1,e2,e3,e4,e5,e6) =
 
 maybeComma :: Maybe a -> S.Snippet
 maybeComma (Just _) = ","
-maybeComma Nothing = mempty
+maybeComma Nothing  = mempty
 
 maybeHeaders :: Maybe Value -> S.Snippet
 maybeHeaders (Just v) = S.encoderAndParam (E.nonNullable E.json) v <> "::jsonb,"

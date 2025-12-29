@@ -26,6 +26,7 @@ module Database.PostgreSQL.Stakhanov
 
  -- * Utilities
  , listQueues
+ , batchSetVT
 
  ) where
 
@@ -205,4 +206,15 @@ listQueues c =
     \e -> pure $ (toQueue <$>) <$> e
   where
     toQueue r = Queue { queueName = fst r, queueDetails = Just (tupleToDetails $ snd r), queueMetrics = Nothing }
+
+-- | Sets the Visibility Timeout of one or many messages to a specified time duration
+-- in the future. Returns the `Messages` that were updated.
+batchSetVT
+  :: C.Connection   -- ^ The connection to PostgreSQL
+  -> Queue          -- ^ The queue to work with
+  -> V.Vector MsgId -- ^ A vector of message IDs to set visibility time
+  -> Int32          -- ^ Duration from now, in seconds, that the messages VT should be set to
+  -> IO (Either S.SessionError Messages)
+batchSetVT c Queue{..} v s =
+  S.run (S.statement () $ setMessagesVT queueName v s) c >>= \e -> pure $ (tupleToMessage <$>) <$> e
 

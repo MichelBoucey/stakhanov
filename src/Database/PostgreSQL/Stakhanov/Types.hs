@@ -6,6 +6,11 @@ import qualified Data.Text        as T
 import           Data.Time
 import           Data.Vector
 
+type MsgId = Int64
+type VT = Int32
+type Qty = Int32
+type Messages = Vector Message
+
 data Queue =
   Queue
     { queueName    :: T.Text
@@ -31,10 +36,6 @@ data Message =
     , headers           :: !(Maybe Value)
     } deriving (Show)
 
-newtype Messages =
-  Messages { unMessages :: Vector Message }
-  deriving (Show)
-
 data Metrics =
   Metrics
     { queueLength        :: Int64
@@ -46,8 +47,4 @@ data Metrics =
     } deriving (Show)
 
 data Delay = InSeconds Int32 | WithTimestamp UTCTime
-
-type MsgId = Int64
-type VT = Int32
-type Qty = Int32
 
