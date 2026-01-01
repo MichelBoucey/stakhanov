@@ -16,6 +16,7 @@ module Database.PostgreSQL.Stakhanov
 
  -- * Reading Messages
  , read
+ , readWithPoll
  , pop
 
  -- * Deleting/Archiving Messages
@@ -153,7 +154,19 @@ read
 read c Queue{..} v q =
   S.run (S.statement (queueName,v,q) readMessages) c >>= \e -> pure $ maybeMessages <$> e
 
--- TODO : readWithPoll
+-- | Same as `read`. Also provides convenient long-poll functionality. When there are no `Messages` in the `Queue`,
+-- the function call will wait for max_poll_seconds in duration before returning. If messages reach the queue
+-- during that duration, they will be read and returned immediately.
+readWithPoll
+  :: C.Connection -- ^ The connection to PostgreSQL
+  -> Queue        -- ^ The queue to work with
+  -> VT           -- ^ The Visibility Timeout : the time in seconds that message(s) become invisible after reading
+  -> Qty          -- ^ The number of messages to read from the queue
+  -> Maybe Int32  -- ^ The max_poll_seconds : the ime in seconds to wait for new messages to reach the queue. Defaults to 5
+  -> Maybe Int32  -- ^ Milliseconds between the internal poll operations. Defaults to 100
+  -> IO (Either S.SessionError (Maybe Messages))
+readWithPoll c Queue{..} v q mmp mpi =
+  S.run (S.statement () $ readMessagesWithPoll queueName v q mmp mpi) c >>= \e -> pure $ maybeMessages <$> e
 
 -- | Reads one or more `Messages` from a `Queue` and /deletes them upon read/.
 pop

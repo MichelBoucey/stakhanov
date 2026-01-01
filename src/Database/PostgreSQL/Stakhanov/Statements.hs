@@ -3,6 +3,7 @@ module Database.PostgreSQL.Stakhanov.Statements where
 import           Contravariant.Extras.Contrazip         (contrazip2, contrazip3)
 import           Data.Aeson
 import           Data.Int
+import qualified Data.List                              as L
 import           Data.Maybe                             (fromMaybe)
 import qualified Data.Text                              as T
 import           Data.Time
@@ -15,6 +16,7 @@ import           Hasql.DynamicStatements.Statement
 import qualified Hasql.Encoders                         as E
 import           Hasql.Statement
 import qualified Hasql.TH                               as TH
+import           Prelude                                hiding (pi)
 
 createQueue :: Statement T.Text ()
 createQueue = [TH.resultlessStatement|select from pgmq.create($1::text)|]
@@ -75,6 +77,14 @@ sendMessages' q vv mvv md =
         <> (fromMaybe mempty $ (mappend "," . jsonbArrayEncoder) <$> mvv) <> maybeComma md <> maybeDelay md <> ")"
       decoder = D.rowVector $ D.column $ D.nonNullable D.int8
   in dynamicallyParameterized snippet decoder True
+
+readMessagesWithPoll :: T.Text -> Int32 -> Int32 -> Maybe Int32 -> Maybe Int32 -> Statement () (V.Vector (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value))
+readMessagesWithPoll q vt qty mmp mpi =
+  let mp = maybe 5 id mmp
+      pi = maybe 100 id mpi
+      snippet = "select msg_id,read_ct,enqueued_at,vt,message,headers from pgmq.read_with_poll(" <>
+                mconcat (L.intersperse "," [S.param q, S.param vt, S.param qty, S.param mp, S.param pi]) <> ")"
+  in dynamicallyParameterized snippet messagesDecoder True
 
 readMessages :: Statement (T.Text,Int32,Int32) (V.Vector (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value))
 readMessages =
