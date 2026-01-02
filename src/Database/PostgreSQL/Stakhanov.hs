@@ -26,9 +26,9 @@ module Database.PostgreSQL.Stakhanov
  , batchDelete
 
  -- * Utilities
+ , batchSetVT
  , listQueues
  , details
- , batchSetVT
 
  ) where
 
@@ -47,7 +47,7 @@ import           Prelude                                  hiding (drop, read)
 -- | Create a new `Queue`.
 --
 -- > λ: create co "MyQueue"
--- > Right (Queue {queueName = "MyQueue", queueMetrics = Nothing, queueDetails = Nothing})
+-- > Right (Queue {queueName = "MyQueue", queueDetails = Nothing, queueMetrics = Nothing})
 --
 create
   :: C.Connection -- ^ The connection to PostgreSQL
@@ -209,6 +209,11 @@ batchDelete
   -> IO (Either S.SessionError (V.Vector MsgId))
 batchDelete c Queue{..} v = S.run (S.statement () $ deleteMessages queueName v) c
 
+-- | List all the `Queue`s that currently exist.
+--
+-- > λ: listQueues co
+-- > Right [Queue {queueName = "MyQueue01", queueDetails = Just (Details {createdAt = 2025-12-09 07:26:34.448688 UTC, isPartitioned = False, isUnlogged = False}), queueMetrics = Nothing},Queue {queueName = "MyQueue02", queueDetails = Just (Details {createdAt = 2025-12-18 14:33:41.563365 UTC, isPartitioned = False, isUnlogged = True}), queueMetrics = Nothing}]
+--
 listQueues
   :: C.Connection -- ^ The connection to PostgreSQL
   -> IO (Either S.SessionError (V.Vector Queue))
@@ -221,13 +226,18 @@ listQueues c =
         , queueDetails = Just (tupleToDetails $ snd r)
         , queueMetrics = Nothing }
 
+-- | Add `Details` information, collected with `listQueues`, to a `Queue` record.
+--
+-- > λ: Right list <- listQueues co
+-- > λ: details MyQueue01 list
+-- > Just (Queue {queueName = "MyQueue01", queueDetails = Just (Details {createdAt = 2025-12-09 07:26:34.448688 UTC, isPartitioned = False, isUnlogged = False}), queueMetrics = Nothing})
+--
 details
-  :: Queue
-  -> V.Vector Queue
-  -> Maybe Queue
-details q vq = do
-  let mq = get q vq
-  case mq of
+  :: Queue          -- ^ The queue to get details for
+  -> V.Vector Queue -- ^ A list of queues obtained from listQueues function
+  -> Maybe Queue    -- ^ The queue with details added
+details q vq =
+  case get q vq of
     Nothing -> Nothing
     Just q' -> Just $ q { queueDetails = queueDetails q' }
   where
