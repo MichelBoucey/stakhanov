@@ -6,10 +6,13 @@ import qualified Data.Text        as T
 import           Data.Time
 import           Data.Vector
 
-type MsgId = Int64
-type VT = Int32
-type Qty = Int32
-type Messages = Vector Message
+type VT           = Int32
+type Qty          = Int32
+type Seconds      = Int32
+type Milliseconds = Int32
+type MsgId        = Int64
+type MsgIds       = Vector MsgId
+type Messages     = Vector Message
 
 data Queue =
   Queue
@@ -17,6 +20,9 @@ data Queue =
     , queueDetails :: Maybe Details
     , queueMetrics :: Maybe Metrics
     } deriving (Show)
+
+instance Eq Queue where
+ Queue n _ _ == Queue n' _ _ = n == n'
 
 data Details =
   Details
@@ -36,11 +42,14 @@ data Message =
     , headers           :: !(Maybe Value)
     } deriving (Show)
 
+instance Eq Message where
+  Message i _ _ _ _ _ == Message i' _ _ _ _ _ = i == i'
+
 data Metrics =
   Metrics
     { queueLength        :: Int64
-    , newestMsgAge       :: Maybe Int32
-    , oldestMsgAge       :: Maybe Int32
+    , newestMsgAge       :: Maybe Seconds
+    , oldestMsgAge       :: Maybe Seconds
     , totalMessages      :: Int64
     , scrapeTime         :: UTCTime
     , queueVisibleLength :: Int64

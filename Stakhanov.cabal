@@ -15,7 +15,8 @@ category:           Database, PostgreSQL
 build-type:         Simple
 extra-doc-files:    CHANGELOG.md
 extra-source-files: ReadMe.md
-tested-with:        GHC ==9.6.7 || ==9.8.4 || ==9.10.2 || ==9.12.2 || ==9.14.1
+tested-with:
+  GHC ==9.6.7 || ==9.8.4 || ==9.10.2 || ==9.12.2 || ==9.14.1
 
 source-repository head
   type:     git
@@ -45,6 +46,7 @@ library
   build-depends:
     , aeson                     >=2.2.3  && <2.4
     , base                      >=4.8    && <5
+    , bytestring                >=0.12   && <0.13
     , contravariant-extras      >=0.3.5  && <0.3.6
     , hasql                     >=1.9    && <1.10
     , hasql-dynamic-statements  >=0.3    && <0.4

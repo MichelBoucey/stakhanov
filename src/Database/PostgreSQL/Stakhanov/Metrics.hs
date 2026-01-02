@@ -35,8 +35,8 @@ metrics
   -> IO (Either S.SessionError Queue)
 metrics c q@Queue{..} =
   S.run (S.statement queueName getMetrics) c >>= \e -> pure $ addMetrics <$> e
-   where
-     addMetrics m = q { queueMetrics = Just $ tupleToMetrics m }
+  where
+    addMetrics m = q { queueMetrics = Just $ tupleToMetrics m }
 
 -- | Get `Metrics` of all created `Queue`s
 allMetrics

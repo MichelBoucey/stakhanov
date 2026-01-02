@@ -11,6 +11,11 @@ import           Database.PostgreSQL.Stakhanov.Types
 import qualified Hasql.DynamicStatements.Snippet     as S
 import qualified Hasql.Encoders                      as E
 
+pureMap
+  :: (Applicative f1, Functor f2)
+  => (a -> b) -> f2 a -> f1 (f2 b)
+pureMap f e = pure $ f <$> e
+
 isJSON :: Value -> Bool
 isJSON (Object _) = True
 isJSON _          = False
