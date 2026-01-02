@@ -27,6 +27,7 @@ module Database.PostgreSQL.Stakhanov
 
  -- * Utilities
  , listQueues
+ , details
  , batchSetVT
 
  ) where
@@ -219,6 +220,25 @@ listQueues c =
         { queueName = fst r
         , queueDetails = Just (tupleToDetails $ snd r)
         , queueMetrics = Nothing }
+
+details
+  :: Queue
+  -> V.Vector Queue
+  -> Maybe Queue
+details q vq = do
+  let mq = get q vq
+  case mq of
+    Nothing -> Nothing
+    Just q' -> Just $ q { queueDetails = queueDetails q' }
+  where
+    get a b = do
+      let c = V.uncons b
+      case c of
+        Nothing -> Nothing
+        Just t  ->
+          if queueName a == queueName (fst t)
+            then Just (fst t)
+            else get a (snd t)
 
 -- | Sets the Visibility Timeout of one or many `Messages` to a specified time duration
 -- in the future. Returns the `Messages` that were updated.
