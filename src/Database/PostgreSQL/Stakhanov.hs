@@ -45,8 +45,8 @@ import           Prelude                                  hiding (drop, read)
 
 -- | Create a new `Queue`.
 --
--- > λ: create co "mq"
--- > Right (Queue {queueName = "mq", queueMetrics = Nothing})
+-- > λ: create co "MyQueue"
+-- > Right (Queue {queueName = "MyQueue", queueMetrics = Nothing, queueDetails = Nothing})
 --
 create
   :: C.Connection -- ^ The connection to PostgreSQL
@@ -140,7 +140,7 @@ batchSend' c Queue{..} vv mvv md =
         else fail "The vector of headers must be equal to the vector of messages"
     else fail "All Aeson Values of Vectors must be Objects"
 
--- | Read one or more `Messages` from a `Queue`. The visibility timeout (`VT`) specifies the amount of time
+-- | Read one or more `Messages` from a `Queue`. The `Visibility Timeout` (`VT`) specifies the amount of time
 -- in seconds that the `Message` will be invisible to other consumers after reading.
 read
   :: C.Connection -- ^ The connection to PostgreSQL
@@ -152,7 +152,7 @@ read c Queue{..} v q =
   S.run (S.statement (queueName,v,q) readMessages) c >>= pureMap maybeMessages
 
 -- | Same as `read`. Also provides convenient long-poll functionality. When there are no `Messages` in the `Queue`,
--- the function call will wait for max_poll_seconds in duration before returning. If messages reach the queue
+-- the function call will wait for `max_poll_seconds` in duration before returning. If messages reach the queue
 -- during that duration, they will be read and returned immediately.
 readWithPoll
   :: C.Connection        -- ^ The connection to PostgreSQL
@@ -160,7 +160,7 @@ readWithPoll
   -> VT                  -- ^ The Visibility Timeout : the time in seconds that message(s) become invisible after reading
   -> Qty                 -- ^ The number of messages to read from the queue
   -> Maybe Seconds       -- ^ The max_poll_seconds : the time in seconds to wait for new messages to reach the queue. Defaults to 5
-  -> Maybe Milliseconds  -- ^ Milliseconds between the internal poll operations. Defaults to 100
+  -> Maybe Milliseconds  -- ^ The milliseconds between the internal poll operations. Defaults to 100
   -> IO (Either S.SessionError (Maybe Messages))
 readWithPoll c Queue{..} v q mmp mpi =
   S.run (S.statement () $ readMessagesWithPoll queueName v q mmp mpi) c >>= pureMap maybeMessages
@@ -220,7 +220,7 @@ listQueues c =
         , queueDetails = Just (tupleToDetails $ snd r)
         , queueMetrics = Nothing }
 
--- | Sets the Visibility Timeout of one or many messages to a specified time duration
+-- | Sets the Visibility Timeout of one or many `Messages` to a specified time duration
 -- in the future. Returns the `Messages` that were updated.
 batchSetVT
   :: C.Connection -- ^ The connection to PostgreSQL

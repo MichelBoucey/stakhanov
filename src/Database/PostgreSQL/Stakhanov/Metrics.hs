@@ -26,8 +26,8 @@ import qualified Hasql.Session                            as S
 
 -- | Get `Queue`'s `Metrics`.
 --
--- > λ: metrics co mq
--- > Right (Queue {queueName = "mq", queueMetrics = Just (Metrics {queueLength = 4, newestMsgAge = 272336, oldestMsgAge = 798677, totalMessages = 4, scrapeTime = 2025-12-18 14:23:41.714705 UTC, queueVisibleLength = 4})})
+-- > λ: metrics co MyQueue
+-- > Right (Queue {queueName = "MyQueue", queueMetrics = Just (Metrics {queueLength = 4, newestMsgAge = 272336, oldestMsgAge = 798677, totalMessages = 4, scrapeTime = 2025-12-18 14:23:41.714705 UTC, queueVisibleLength = 4}), queueDetails = Nothing})
 --
 metrics
   :: C.Connection -- ^ The connection to PostgreSQL
@@ -51,12 +51,12 @@ getQueueLength (Queue _ _ (Just Metrics { .. })) = Just queueLength
 getQueueLength (Queue _ _ Nothing)               = Nothing
 
 -- | Age of the newest message in the queue, in seconds.
-getNewestMsgAge :: Queue -> Maybe Int32
+getNewestMsgAge :: Queue -> Maybe Seconds
 getNewestMsgAge (Queue _ _ (Just Metrics{..})) = newestMsgAge
 getNewestMsgAge (Queue _ _ Nothing)            = Nothing
 
 -- | Age of the oldest message in the queue, in seconds.
-getOldestMsgAge :: Queue -> Maybe Int32
+getOldestMsgAge :: Queue -> Maybe Seconds
 getOldestMsgAge (Queue _ _ (Just Metrics{..})) = oldestMsgAge
 getOldestMsgAge (Queue _ _ Nothing)            = Nothing
 
