@@ -5,6 +5,7 @@ import           Data.Int
 import qualified Data.Text        as T
 import           Data.Time
 import           Data.Vector
+import qualified Hasql.Connection as C
 
 type VT           = Int32
 type Qty          = Int32
@@ -16,13 +17,17 @@ type Messages     = Vector Message
 
 data Queue =
   Queue
-    { queueName    :: T.Text
-    , queueDetails :: Maybe Details
-    , queueMetrics :: Maybe Metrics
-    } deriving (Show)
+    { qName    :: T.Text
+    , qPGConn  :: Maybe C.Connection
+    , qDetails :: Maybe Details
+    , qMetrics :: Maybe Metrics
+    }
+
+instance Show Queue where
+  show (Queue n _ _ _ ) = show n
 
 instance Eq Queue where
- Queue n _ _ == Queue n' _ _ = n == n'
+ Queue n _ _ _ == Queue n' _ _ _ = n == n'
 
 data Details =
   Details

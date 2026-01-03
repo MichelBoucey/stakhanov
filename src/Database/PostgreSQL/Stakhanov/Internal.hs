@@ -1,15 +1,23 @@
 module Database.PostgreSQL.Stakhanov.Internal where
 
+import           Control.Monad
 import           Data.Aeson.Types
 import           Data.Int
 import           Data.List                           (intersperse)
+import           Data.Maybe
 import qualified Data.Monoid                         as M
 import qualified Data.Text                           as T
 import           Data.Time
 import           Data.Vector                         as V
 import           Database.PostgreSQL.Stakhanov.Types
+import qualified Hasql.Connection                    as C
 import qualified Hasql.DynamicStatements.Snippet     as S
 import qualified Hasql.Encoders                      as E
+
+getConn :: Maybe C.Connection -> IO C.Connection
+getConn mc = do
+  unless (isJust mc) $ putStrLn "Missing PG connection"
+  pure $ fromJust mc
 
 pureMap
   :: (Applicative f1, Functor f2)
@@ -44,9 +52,10 @@ tupleToQueueWithMetrics
   -> Queue
 tupleToQueueWithMetrics (e1,e2,e3,e4,e5,e6,e7) =
   Queue
-   { queueName    = e1
-   , queueDetails = Nothing
-   , queueMetrics = Just $ tupleToMetrics (e2,e3,e4,e5,e6,e7)
+   { qName    = e1
+   , qPGConn  = Nothing
+   , qDetails = Nothing
+   , qMetrics = Just $ tupleToMetrics (e2,e3,e4,e5,e6,e7)
    }
 
 tupleToMetrics
