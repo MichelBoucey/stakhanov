@@ -26,8 +26,9 @@ module Database.PostgreSQL.Stakhanov
  , batchDelete
 
  -- * Utilities
- , listQueues
  , batchSetVT
+ , listQueues
+ , details
 
  ) where
 
@@ -46,7 +47,7 @@ import           Prelude                                  hiding (drop, read)
 -- | Create a new `Queue`.
 --
 -- > λ: create co "MyQueue"
--- > Right (Queue {queueName = "MyQueue", queueMetrics = Nothing, queueDetails = Nothing})
+-- > Right (Queue {queueName = "MyQueue", queueDetails = Nothing, queueMetrics = Nothing})
 --
 create
   :: C.Connection -- ^ The connection to PostgreSQL
@@ -208,6 +209,11 @@ batchDelete
   -> IO (Either S.SessionError (V.Vector MsgId))
 batchDelete c Queue{..} v = S.run (S.statement () $ deleteMessages queueName v) c
 
+-- | List all the `Queue`s that currently exist.
+--
+-- > λ: listQueues co
+-- > Right [Queue {queueName = "MyQueue01", queueDetails = Just (Details {createdAt = 2025-12-09 07:26:34.448688 UTC, isPartitioned = False, isUnlogged = False}), queueMetrics = Nothing},Queue {queueName = "MyQueue02", queueDetails = Just (Details {createdAt = 2025-12-18 14:33:41.563365 UTC, isPartitioned = False, isUnlogged = True}), queueMetrics = Nothing}]
+--
 listQueues
   :: C.Connection -- ^ The connection to PostgreSQL
   -> IO (Either S.SessionError (V.Vector Queue))
@@ -219,6 +225,30 @@ listQueues c =
         { queueName = fst r
         , queueDetails = Just (tupleToDetails $ snd r)
         , queueMetrics = Nothing }
+
+-- | Add `Details` information, collected with `listQueues`, to a `Queue` record.
+--
+-- > λ: Right list <- listQueues co
+-- > λ: details MyQueue01 list
+-- > Just (Queue {queueName = "MyQueue01", queueDetails = Just (Details {createdAt = 2025-12-09 07:26:34.448688 UTC, isPartitioned = False, isUnlogged = False}), queueMetrics = Nothing})
+--
+details
+  :: Queue          -- ^ The queue to get details for
+  -> V.Vector Queue -- ^ A list of queues obtained from listQueues function
+  -> Maybe Queue    -- ^ The queue with details added
+details q vq =
+  case get q vq of
+    Nothing -> Nothing
+    Just q' -> Just $ q { queueDetails = queueDetails q' }
+  where
+    get a b = do
+      let c = V.uncons b
+      case c of
+        Nothing -> Nothing
+        Just t  ->
+          if queueName a == queueName (fst t)
+            then Just (fst t)
+            else get a (snd t)
 
 -- | Sets the Visibility Timeout of one or many `Messages` to a specified time duration
 -- in the future. Returns the `Messages` that were updated.
