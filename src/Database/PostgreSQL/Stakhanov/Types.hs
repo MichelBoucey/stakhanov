@@ -5,6 +5,7 @@ import           Data.Int
 import qualified Data.Text        as T
 import           Data.Time
 import           Data.Vector
+import qualified Hasql.Connection as C
 
 type VT           = Int32
 type Qty          = Int32
@@ -14,15 +15,21 @@ type MsgId        = Int64
 type MsgIds       = Vector MsgId
 type Messages     = Vector Message
 
+newtype HasqlConn = HasqlConn { unHasqlConn :: C.Connection }
+
+instance Show HasqlConn where
+  show (HasqlConn _) = show ("a Hasql connection" :: String)
+
 data Queue =
   Queue
-    { queueName    :: T.Text
-    , queueDetails :: Maybe Details
-    , queueMetrics :: Maybe Metrics
+    { qName    :: T.Text
+    , qPGConn  :: !HasqlConn
+    , qDetails :: Maybe Details
+    , qMetrics :: Maybe Metrics
     } deriving (Show)
 
 instance Eq Queue where
- Queue n _ _ == Queue n' _ _ = n == n'
+ Queue n _ _ _ == Queue n' _ _ _ = n == n'
 
 data Details =
   Details

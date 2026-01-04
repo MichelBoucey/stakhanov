@@ -8,6 +8,7 @@ import qualified Data.Text                           as T
 import           Data.Time
 import           Data.Vector                         as V
 import           Database.PostgreSQL.Stakhanov.Types
+import qualified Hasql.Connection                    as C
 import qualified Hasql.DynamicStatements.Snippet     as S
 import qualified Hasql.Encoders                      as E
 
@@ -40,13 +41,15 @@ tupleToDetails (e1,e2,e3) =
     }
 
 tupleToQueueWithMetrics
-  :: (T.Text, Int64, Maybe Int32, Maybe Int32, Int64, UTCTime, Int64)
+  :: C.Connection
+  -> (T.Text, Int64, Maybe Int32, Maybe Int32, Int64, UTCTime, Int64)
   -> Queue
-tupleToQueueWithMetrics (e1,e2,e3,e4,e5,e6,e7) =
+tupleToQueueWithMetrics c (e1,e2,e3,e4,e5,e6,e7) =
   Queue
-   { queueName    = e1
-   , queueDetails = Nothing
-   , queueMetrics = Just $ tupleToMetrics (e2,e3,e4,e5,e6,e7)
+   { qName    = e1
+   , qPGConn  = HasqlConn c
+   , qDetails = Nothing
+   , qMetrics = Just $ tupleToMetrics (e2,e3,e4,e5,e6,e7)
    }
 
 tupleToMetrics
