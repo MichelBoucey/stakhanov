@@ -48,12 +48,13 @@ tupleToDetails (e1,e2,e3) =
     }
 
 tupleToQueueWithMetrics
-  :: (T.Text, Int64, Maybe Int32, Maybe Int32, Int64, UTCTime, Int64)
+  :: C.Connection
+  -> (T.Text, Int64, Maybe Int32, Maybe Int32, Int64, UTCTime, Int64)
   -> Queue
-tupleToQueueWithMetrics (e1,e2,e3,e4,e5,e6,e7) =
+tupleToQueueWithMetrics c (e1,e2,e3,e4,e5,e6,e7) =
   Queue
    { qName    = e1
-   , qPGConn  = Nothing
+   , qPGConn  = c
    , qDetails = Nothing
    , qMetrics = Just $ tupleToMetrics (e2,e3,e4,e5,e6,e7)
    }

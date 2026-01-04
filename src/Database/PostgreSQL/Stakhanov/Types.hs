@@ -18,7 +18,7 @@ type Messages     = Vector Message
 data Queue =
   Queue
     { qName    :: T.Text
-    , qPGConn  :: Maybe C.Connection
+    , qPGConn  :: C.Connection
     , qDetails :: Maybe Details
     , qMetrics :: Maybe Metrics
     }

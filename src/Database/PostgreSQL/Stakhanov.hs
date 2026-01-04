@@ -28,6 +28,7 @@ module Database.PostgreSQL.Stakhanov
  -- * Utilities
  , batchSetVT
  , listQueues
+ , listQueues'
  , details
 
  ) where
@@ -55,7 +56,7 @@ create
   -> IO (Either S.SessionError Queue)
 create c t =
   S.run (S.statement t createQueue) c >>=
-    \e -> pure $ (\_ -> Queue t (Just c) Nothing Nothing) <$> e
+    \e -> pure $ (\_ -> Queue t c Nothing Nothing) <$> e
 
 -- | Create an unlogged new `Queue`. This is useful
 -- when write throughput is more important that durability.
@@ -66,14 +67,14 @@ createUnlogged
   -> IO (Either S.SessionError Queue)
 createUnlogged c t =
   S.run (S.statement t createUnloggedQueue) c >>=
-    \e -> pure $ (\_ -> Queue t (Just c) Nothing Nothing) <$> e
+    \e -> pure $ (\_ -> Queue t c Nothing Nothing) <$> e
 
 -- | Declare an already existing `Queue`.
 declare
   :: T.Text       -- ^ The name of the queue to declare
   -> C.Connection -- ^ The connection to PostgreSQL
   -> Queue
-declare t c = Queue t (Just c) Nothing Nothing
+declare t c = Queue t c Nothing Nothing
 
 -- | Permanently deletes all `Messages` in a `Queue`.
 -- Returns the number of `Messages` that were deleted.
@@ -81,14 +82,13 @@ purge
   :: Queue        -- ^ The queue to work with
   -> IO (Either S.SessionError Int64)
 purge Queue{..} =
-  getConn qPGConn >>= S.run (S.statement qName purgeQueue)
+  S.run (S.statement qName purgeQueue) qPGConn
 
 -- | Deletes a `Queue` and its archive.
 drop
   :: Queue        -- ^ The queue to work with
   -> IO (Either S.SessionError Bool)
-drop Queue{..} =
-  getConn qPGConn >>= S.run (S.statement qName dropQueue)
+drop Queue{..} = S.run (S.statement qName dropQueue) qPGConn
 
 -- | Send a single `Message` to a `Queue`.
 -- Returns the `MsgId` of the just created `Message`.
@@ -96,8 +96,7 @@ send
   :: Queue        -- ^ The queue to work with
   -> Value        -- ^ The message to send to the queue (a JSON object)
   -> IO (Either S.SessionError MsgId)
-send Queue{..} v@(Object _) =
-  getConn qPGConn >>= S.run (S.statement (qName,v) sendMessage)
+send Queue{..} v@(Object _) = S.run (S.statement (qName,v) sendMessage) qPGConn
 send _         _            = fail "The Aeson Value must be an Object"
 
 -- | Send a single `Message` to a `Queue` with optional metadata (a JSON object named headers)
@@ -109,7 +108,7 @@ send'
   -> Maybe Delay  -- ^ Optional time before the message becomes visible
   -> IO (Either S.SessionError MsgId)
 send' Queue{..} v@(Object _) mv@(Just (Object _)) md =
-  getConn qPGConn >>= S.run (S.statement () $ sendMessage' qName v mv md)
+  S.run (S.statement () $ sendMessage' qName v mv md) qPGConn
 send' _ _ _ _  = fail "The Aeson Values must be Objects"
 
 -- | Send on or more `Messages` to a `Queue`.
@@ -119,7 +118,7 @@ batchSend
   -> IO (Either S.SessionError (V.Vector MsgId))
 batchSend Queue{..} v =
   if allJSON v
-    then getConn qPGConn >>= S.run (S.statement () $ sendMessages qName v)
+    then S.run (S.statement () $ sendMessages qName v) qPGConn
     else fail "All Aeson Values of the Vector must be Objects"
 
 -- | Send on or more `Messages` to a `Queue` with optional headers (a JSON object of metadata)
@@ -134,7 +133,7 @@ batchSend' Queue{..} vv mvv md =
   if allJSON vv && maybe True allJSON mvv
     then
       if isNothing mvv || isJust mvv && V.length vv == V.length (fromJust mvv)
-        then getConn qPGConn >>= S.run (S.statement () $ sendMessages' qName vv mvv md)
+        then S.run (S.statement () $ sendMessages' qName vv mvv md) qPGConn
         else fail "The vector of headers must be equal to the vector of messages"
     else fail "All Aeson Values of Vectors must be Objects"
 
@@ -146,7 +145,7 @@ read
   -> Qty          -- ^ The number of messages to read from the queue
   -> IO (Either S.SessionError (Maybe Messages))
 read Queue{..} v q =
-  getConn qPGConn >>= S.run (S.statement (qName,v,q) readMessages) >>= pureMap maybeMessages
+  S.run (S.statement (qName,v,q) readMessages) qPGConn >>= pureMap maybeMessages
 
 -- | Same as `read`. Also provides convenient long-poll functionality. When there are no `Messages` in the `Queue`,
 -- the function call will wait for `max_poll_seconds` in duration before returning. If messages reach the queue
@@ -159,15 +158,15 @@ readWithPoll
   -> Maybe Milliseconds  -- ^ The milliseconds between the internal poll operations. Defaults to 100
   -> IO (Either S.SessionError (Maybe Messages))
 readWithPoll Queue{..} v q mmp mpi =
-  getConn qPGConn >>= S.run (S.statement () $ readMessagesWithPoll qName v q mmp mpi) >>= pureMap maybeMessages
+  S.run (S.statement () $ readMessagesWithPoll qName v q mmp mpi) qPGConn >>= pureMap maybeMessages
 
 -- | Reads one or more `Messages` from a `Queue` and /deletes them upon read/.
 pop
   :: Queue        -- ^ The queue to work with
   -> Qty          -- ^ The number of messages to pop from the queue (defaults to 1)
   -> IO (Either S.SessionError (Maybe Messages))
-pop Queue{..} q =
-  getConn qPGConn >>= S.run (S.statement (qName,q) popMessages) >>= pureMap maybeMessages
+pop Queue{..} y =
+  S.run (S.statement (qName,y) popMessages) qPGConn >>= pureMap maybeMessages
 
 -- | Removes a single requested `Message` from the specified `Queue`
 -- and inserts it into the `Queue`'s archive.
@@ -175,8 +174,7 @@ archive
   :: Queue        -- ^ The queue to work with
   -> MsgId        -- ^ The message ID of the message to archive
   -> IO (Either S.SessionError Bool)
-archive Queue{..} i =
-  getConn qPGConn >>= S.run (S.statement (qName,i) archiveMessage)
+archive Queue{..} i = S.run (S.statement (qName,i) archiveMessage) qPGConn
 
 -- | Deletes a batch of requested `Messages` from the specified `Queue` and inserts them into the `Queue`'s archive.
 -- Returns a `Vector` of `MsgId` that were successfully archived.
@@ -184,42 +182,44 @@ batchArchive
   :: Queue          -- ^ The queue to work with
   -> V.Vector MsgId -- ^ A Vector of message IDs to archive
   -> IO (Either S.SessionError (V.Vector MsgId))
-batchArchive Queue{..} v =
-  getConn qPGConn >>= S.run (S.statement () $ archiveMessages qName v)
+batchArchive Queue{..} v = S.run (S.statement () $ archiveMessages qName v) qPGConn
 
 -- | Deletes a single `Message` from a `Queue`.
 delete
   :: Queue        -- ^ The queue to work with
   -> MsgId        -- ^ The message ID to delete
   -> IO (Either S.SessionError Bool)
-delete Queue{..} i =
-  getConn qPGConn >>= S.run (S.statement (qName,i) deleteMessage)
+delete Queue{..} i = S.run (S.statement (qName,i) deleteMessage) qPGConn
 
 -- | Delete one or many `Messages` from a `Queue`.
 batchDelete
   :: Queue        -- ^ The queue to work with
   -> MsgIds       -- ^ A Vector of message IDs to delete
   -> IO (Either S.SessionError (V.Vector MsgId))
-batchDelete Queue{..} v =
-  getConn qPGConn >>= S.run (S.statement () $ deleteMessages qName v)
+batchDelete Queue{..} v = S.run (S.statement () $ deleteMessages qName v) qPGConn
 
--- | List all the `Queue`s that currently exist.
---
--- > λ: listQueues co
--- > Right [Queue {qName = "MyQueue01", qDetails = Just (Details {createdAt = 2025-12-09 07:26:34.448688 UTC, isPartitioned = False, isUnlogged = False}), queueMetrics = Nothing},Queue {qName = "MyQueue02", qDetails = Just (Details {createdAt = 2025-12-18 14:33:41.563365 UTC, isPartitioned = False, isUnlogged = True}), queueMetrics = Nothing}]
---
 listQueues
-  :: C.Connection -- ^ The connection to PostgreSQL
+  :: C.Connection
   -> IO (Either S.SessionError (V.Vector Queue))
 listQueues c =
-  S.run (S.statement () getQueuesDetails) c >>= pureMap (fmap toQueue)
+  S.run (S.statement () getQueuesDetails) c >>= pureMap (toQueue <$>)
   where
     toQueue r =
       Queue
         { qName    = fst r
-        , qPGConn  = Nothing
+        , qPGConn  = c
         , qDetails = Just (tupleToDetails $ snd r)
         , qMetrics = Nothing }
+
+-- | List all the `Queue`s that currently exist.
+--
+-- > λ: listQueues MyQueue
+-- > Right [Queue {qName = "MyQueue01", qDetails = Just (Details {createdAt = 2025-12-09 07:26:34.448688 UTC, isPartitioned = False, isUnlogged = False}), queueMetrics = Nothing},Queue {qName = "MyQueue02", qDetails = Just (Details {createdAt = 2025-12-18 14:33:41.563365 UTC, isPartitioned = False, isUnlogged = True}), queueMetrics = Nothing}]
+--
+listQueues'
+  :: Queue -- ^ A queue to use its connection to reach PostgreSQL and add this connection to each queue collected
+  -> IO (Either S.SessionError (V.Vector Queue))
+listQueues' Queue{..} = listQueues qPGConn
 
 -- | Add `Details` information, collected with `listQueues`, to a `Queue` record.
 --
@@ -253,5 +253,5 @@ batchSetVT
   -> Seconds      -- ^ Duration from now, in seconds, that the messages VT should be set to
   -> IO (Either S.SessionError Messages)
 batchSetVT Queue{..} v s =
-  getConn qPGConn >>= S.run (S.statement () $ setMessagesVT qName v s) >>= pureMap (fmap tupleToMessage)
+  S.run (S.statement () $ setMessagesVT qName v s) qPGConn >>= pureMap (tupleToMessage <$>)
 

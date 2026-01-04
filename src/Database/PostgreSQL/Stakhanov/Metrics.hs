@@ -21,7 +21,6 @@ import qualified Data.Vector                              as V
 import           Database.PostgreSQL.Stakhanov.Internal
 import           Database.PostgreSQL.Stakhanov.Statements
 import           Database.PostgreSQL.Stakhanov.Types
-import qualified Hasql.Connection                         as C
 import qualified Hasql.Session                            as S
 
 -- | Get `Queue`'s `Metrics`.
@@ -33,21 +32,22 @@ metrics
   :: Queue        -- ^ The name of the queue
   -> IO (Either S.SessionError Queue)
 metrics q@Queue{..} =
-  getConn qPGConn >>= S.run (S.statement qName getMetrics) >>= \e -> pure $ addMetrics <$> e
+  S.run (S.statement qName getMetrics) qPGConn >>= pureMap addMetrics
   where
     addMetrics m = q { qMetrics = Just $ tupleToMetrics m }
 
 -- | Get `Metrics` of all created `Queue`s
 allMetrics
-  :: C.Connection -- ^ The connection to PostgreSQL
+  :: Queue -- ^ The connection to PostgreSQL
   -> IO (Either S.SessionError (V.Vector Queue))
-allMetrics c =
-  S.run (S.statement () getAllMetrics) c >>= \e -> pure $ (tupleToQueueWithMetrics <$>) <$> e
+allMetrics Queue{..} =
+  -- S.run (S.statement () getAllMetrics) qPGConn >>= \e -> pure $ (tupleToQueueWithMetrics qPGConn <$>) <$> e
+  S.run (S.statement () getAllMetrics) qPGConn >>= pureMap (tupleToQueueWithMetrics qPGConn <$>)
 
 -- | Number of messages currently in the queue.
 getQueueLength :: Queue -> Maybe Int64
-getQueueLength (Queue _ _ _  (Just Metrics { .. })) = Just queueLength
-getQueueLength (Queue _ _ _ Nothing)                = Nothing
+getQueueLength (Queue _ _ _  (Just Metrics{..})) = Just queueLength
+getQueueLength (Queue _ _ _ Nothing)             = Nothing
 
 -- | Age of the newest message in the queue, in seconds.
 getNewestMsgAge :: Queue -> Maybe Seconds
