@@ -15,16 +15,18 @@ type MsgId        = Int64
 type MsgIds       = Vector MsgId
 type Messages     = Vector Message
 
+newtype HasqlConn = HasqlConn { unHasqlConn :: C.Connection }
+
+instance Show HasqlConn where
+  show (HasqlConn _) = show ("a Hasql connection" :: String)
+
 data Queue =
   Queue
     { qName    :: T.Text
-    , qPGConn  :: C.Connection
+    , qPGConn  :: !HasqlConn
     , qDetails :: Maybe Details
     , qMetrics :: Maybe Metrics
-    }
-
-instance Show Queue where
-  show (Queue n _ _ _ ) = show n
+    } deriving (Show)
 
 instance Eq Queue where
  Queue n _ _ _ == Queue n' _ _ _ = n == n'

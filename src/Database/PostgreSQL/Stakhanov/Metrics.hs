@@ -32,7 +32,7 @@ metrics
   :: Queue        -- ^ The name of the queue
   -> IO (Either S.SessionError Queue)
 metrics q@Queue{..} =
-  S.run (S.statement qName getMetrics) qPGConn >>= pureMap addMetrics
+  S.run (S.statement qName getMetrics) (unHasqlConn qPGConn) >>= pureMap addMetrics
   where
     addMetrics m = q { qMetrics = Just $ tupleToMetrics m }
 
@@ -41,8 +41,8 @@ allMetrics
   :: Queue -- ^ The connection to PostgreSQL
   -> IO (Either S.SessionError (V.Vector Queue))
 allMetrics Queue{..} =
-  -- S.run (S.statement () getAllMetrics) qPGConn >>= \e -> pure $ (tupleToQueueWithMetrics qPGConn <$>) <$> e
-  S.run (S.statement () getAllMetrics) qPGConn >>= pureMap (tupleToQueueWithMetrics qPGConn <$>)
+  let c = unHasqlConn qPGConn
+  in S.run (S.statement () getAllMetrics) c >>= pureMap (tupleToQueueWithMetrics c <$>)
 
 -- | Number of messages currently in the queue.
 getQueueLength :: Queue -> Maybe Int64
