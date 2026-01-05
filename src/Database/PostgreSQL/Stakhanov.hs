@@ -30,6 +30,9 @@ module Database.PostgreSQL.Stakhanov
  , listQueues
  , listQueues'
  , details
+ , getCreatedAt
+ , getIsPartitioned
+ , getIsUnlogged
 
  ) where
 import           Control.Monad
@@ -37,6 +40,7 @@ import           Data.Aeson.Types
 import           Data.Int
 import           Data.Maybe
 import           Data.Text                                as T hiding (drop)
+import           Data.Time
 import qualified Data.Vector                              as V
 import           Database.PostgreSQL.Stakhanov.Internal
 import           Database.PostgreSQL.Stakhanov.Statements
@@ -249,6 +253,18 @@ details q vq =
           if qName a == qName (fst t)
             then Just (fst t)
             else get a (snd t)
+
+getCreatedAt :: Queue -> Maybe UTCTime
+getCreatedAt (Queue _ _ (Just Details{..}) _) = Just createdAt
+getCreatedAt (Queue _ _ Nothing _)            = Nothing
+
+getIsPartitioned :: Queue -> Maybe Bool
+getIsPartitioned (Queue _ _ (Just Details{..}) _) = Just isPartitioned
+getIsPartitioned (Queue _ _ Nothing _)            = Nothing
+
+getIsUnlogged :: Queue -> Maybe Bool
+getIsUnlogged (Queue _ _ (Just Details{..}) _) = Just isUnlogged
+getIsUnlogged (Queue _ _ Nothing _)            = Nothing
 
 -- | Sets the Visibility Timeout of one or many `Messages` to a specified time duration
 -- in the future. Returns the `Messages` that were updated.
