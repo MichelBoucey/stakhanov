@@ -1,11 +1,11 @@
 cabal-version:      3.0
-name:               Stakhanov
+name:               stakhanov
 version:            0.1.0.0
 synopsis:           A PGMQ client
 description:
   A fast Haskell PostgreSQL Message Queue client for busy workers
 
-homepage:           https://github.com/MichelBoucey/Stakhanov
+homepage:           https://github.com/MichelBoucey/stakhanov
 license:            BSD-3-Clause
 license-file:       LICENSE
 author:             Michel Boucey
@@ -20,7 +20,7 @@ tested-with:
 
 source-repository head
   type:     git
-  location: https://github.com/MichelBoucey/Stakhanov.git
+  location: https://github.com/MichelBoucey/stakhanov.git
 
 common warnings
   ghc-options: -Wall
