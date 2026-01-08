@@ -60,7 +60,7 @@ sendMessage' :: T.Text -> Value -> Maybe Value -> Maybe Delay -> Statement () In
 sendMessage' q v mv mi =
   let snippet =
         "select * from pgmq.send(" <> S.param q <> ","
-        <> S.param v <> "," <> maybeHeaders mv <> maybeDelay mi <> ")"
+        <> S.param v <> maybeHeaders mv <> maybeDelay mi <> ")"
       decoder = D.singleRow $ D.column $ D.nonNullable D.int8
   in dynamicallyParameterized snippet decoder True
 
@@ -74,7 +74,7 @@ sendMessages' :: T.Text -> (V.Vector Value) -> Maybe (V.Vector Value) -> Maybe D
 sendMessages' q vv mvv md =
   let snippet =
         "select * from pgmq.send_batch(" <> S.param q <> "," <> jsonbArrayEncoder vv
-        <> (fromMaybe mempty $ (mappend "," . jsonbArrayEncoder) <$> mvv) <> maybeComma md <> maybeDelay md <> ")"
+        <> (fromMaybe mempty $ (mappend "," . jsonbArrayEncoder) <$> mvv) <> maybeDelay md <> ")"
       decoder = D.rowVector $ D.column $ D.nonNullable D.int8
   in dynamicallyParameterized snippet decoder True
 
