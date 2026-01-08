@@ -14,7 +14,7 @@ main = hspec $ do
   describe "Create a Hspec test queue" $
       it "Return the record of the created queue" $ do
         Right c <- acquireLocalPGConn
-        Right q <- S.create c "HspecTestQueue"
+        Right q <- S.create "HspecTestQueue" c
         q `shouldBe` (q :: Queue)
 
   describe "Send a message" $
