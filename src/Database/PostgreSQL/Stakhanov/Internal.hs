@@ -76,17 +76,13 @@ tupleToMessage (e1,e2,e3,e4,e5,e6) =
     , message           = e5
     , headers           = e6 }
 
-maybeComma :: Maybe a -> S.Snippet
-maybeComma (Just _) = ","
-maybeComma Nothing  = mempty
-
 maybeHeaders :: Maybe Value -> S.Snippet
-maybeHeaders (Just v) = S.encoderAndParam (E.nonNullable E.json) v <> "::jsonb,"
+maybeHeaders (Just v) = "," <> S.encoderAndParam (E.nonNullable E.json) v <> "::jsonb"
 maybeHeaders Nothing  = mempty
 
 maybeDelay :: Maybe Delay -> S.Snippet
-maybeDelay (Just (InSeconds s))     = S.encoderAndParam (E.nonNullable E.int4) s
-maybeDelay (Just (WithTimestamp t)) = S.encoderAndParam (E.nonNullable E.timestamptz) t
+maybeDelay (Just (InSeconds s))     = "," <> S.encoderAndParam (E.nonNullable E.int4) s
+maybeDelay (Just (WithTimestamp t)) = "," <> S.encoderAndParam (E.nonNullable E.timestamptz) t
 maybeDelay Nothing                  = mempty
 
 jsonbArrayEncoder :: V.Vector Value -> S.Snippet
