@@ -55,10 +55,10 @@ import           Prelude                                  hiding (drop, read)
 -- > Right (Queue {qName = "MyQueue", qDetails = Nothing, queueMetrics = Nothing})
 --
 create
-  :: C.Connection -- ^ The connection to PostgreSQL
-  -> T.Text       -- ^ The name of the queue to create
+  :: T.Text       -- ^ The name of the queue to create
+  -> C.Connection -- ^ The PostgreSQL connection to use
   -> IO (Either S.SessionError Queue)
-create c t =
+create t c =
   S.run (S.statement t createQueue) c >>=
     pureMap (\_ -> Queue t (HasqlConn c) Nothing Nothing)
 
@@ -66,17 +66,17 @@ create c t =
 -- when write throughput is more important that durability.
 -- See [PostgreSQL documentation about unlogged tables](https://www.postgresql.org/docs/current/sql-createtable.html#SQL-CREATETABLE-UNLOGGED).
 createUnlogged
-  :: C.Connection -- ^ The connection to PostgreSQL
-  -> T.Text       -- ^ The name of the queue to create
+  :: T.Text       -- ^ The name of the queue to create
+  -> C.Connection -- ^ The PostgreSQL connection to use
   -> IO (Either S.SessionError Queue)
-createUnlogged c t =
+createUnlogged t c =
   S.run (S.statement t createUnloggedQueue) c >>=
     pureMap (\_ -> Queue t (HasqlConn c) Nothing Nothing)
 
 -- | Declare an already existing `Queue`.
 declare
   :: T.Text       -- ^ The name of the queue to declare
-  -> C.Connection -- ^ The connection to PostgreSQL
+  -> C.Connection -- ^ The PostgreSQL connection to use
   -> Queue
 declare t c = Queue t (HasqlConn c) Nothing Nothing
 
