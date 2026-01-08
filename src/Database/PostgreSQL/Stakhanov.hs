@@ -58,7 +58,7 @@ create
   :: T.Text       -- ^ The name of the queue to create
   -> C.Connection -- ^ The PostgreSQL connection to use
   -> IO (Either S.SessionError Queue)
-create c t =
+create t c =
   S.run (S.statement t createQueue) c >>=
     pureMap (\_ -> Queue t (HasqlConn c) Nothing Nothing)
 
@@ -69,7 +69,7 @@ createUnlogged
   :: T.Text       -- ^ The name of the queue to create
   -> C.Connection -- ^ The PostgreSQL connection to use
   -> IO (Either S.SessionError Queue)
-createUnlogged c t =
+createUnlogged t c =
   S.run (S.statement t createUnloggedQueue) c >>=
     pureMap (\_ -> Queue t (HasqlConn c) Nothing Nothing)
 
