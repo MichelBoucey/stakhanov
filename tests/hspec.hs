@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -fno-warn-incomplete-patterns #-}
+{-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 import           Data.Aeson
