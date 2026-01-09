@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-incomplete-patterns #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 import           Data.Aeson
@@ -9,7 +10,6 @@ import           Database.PostgreSQL.Stakhanov.Connection
 import           Database.PostgreSQL.Stakhanov.Metrics
 import           Database.PostgreSQL.Stakhanov.Types
 import           Test.Hspec
-import Control.Monad
 
 main :: IO ()
 main = hspec $ do
@@ -74,7 +74,7 @@ main = hspec $ do
         Right c <- acquireLocalPGConn
         let q = S.declare "HspecTestQueue" c
         Right q' <- metrics q
-        (pure $ getQueueLength q') `shouldReturn` Just 11
+        pure (getQueueLength q') `shouldReturn` Just 11
 
   describe "Get metrics of all queues" $
       it "Return a vector of queues with their metrics embbeded" $ do
@@ -157,7 +157,7 @@ main = hspec $ do
         let q = S.declare "HspecTestQueue" c
         Right v <- S.listQueues' q
         let Just q' = S.details q v
-        (pure $ S.getIsUnlogged q') `shouldReturn` Just False
+        pure (S.getIsUnlogged q') `shouldReturn` Just False
 
   describe "Delete the queue" $
       it "Return True" $ do
