@@ -1,4 +1,4 @@
--- | This Haskell library implements the most of [PGMQ](https://github.com/pgmq/pgmq) [API functions](https://pgmq.github.io/pgmq/api/sql/functions/) based upon Hasql ecosystem and Vector and should be used qualified.
+-- | This Haskell library, based upon [Hasql](https://hackage.haskell.org/package/hasql) ecosystem and [Vector](https://hackage.haskell.org/package/vector), implements the most of [PGMQ](https://github.com/pgmq/pgmq) [API functions](https://pgmq.github.io/pgmq/api/sql/functions/) and should be used qualified.
 
 module Database.PostgreSQL.Stakhanov
  (
