@@ -30,6 +30,7 @@ module Database.PostgreSQL.Stakhanov
  , listQueues
  , listQueues'
  , details
+ , getQName
  , getCreatedAt
  , getIsPartitioned
  , getIsUnlogged
@@ -253,6 +254,9 @@ details q vq =
           if qName a == qName (fst t)
             then Just (fst t)
             else get a (snd t)
+
+getQName :: Queue -> T.Text
+getQName Queue{..} = qName
 
 getCreatedAt :: Queue -> Maybe UTCTime
 getCreatedAt (Queue _ _ (Just Details{..}) _) = Just createdAt
