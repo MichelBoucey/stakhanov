@@ -91,7 +91,7 @@ declare
 declare t c = Queue t (HasqlConn c) Nothing Nothing
 
 -- | Permanently deletes all `Messages` in the given `Queue`.
--- Return the number of `Messages` that were deleted.
+-- Returns the number of `Messages` that were deleted.
 purge
   :: Queue        -- ^ The queue to work with
   -> IO (Either S.SessionError Int64)
@@ -106,7 +106,7 @@ drop Queue{..} =
   S.run (S.statement qName dropQueue) (unHasqlConn qPGConn)
 
 -- | Send a single `Message` to a `Queue`.
--- Return the `MsgId` of the just created `Message`.
+-- Returns the `MsgId` of the just created `Message`.
 send
   :: Queue -- ^ The queue to work with
   -> Value -- ^ A JSON object to send as a message to the queue
@@ -116,7 +116,7 @@ send Queue{..} v@(Object _) =
 send _         _            = fail "The Aeson Value must be an Object"
 
 -- | Send a single `Message` to a `Queue` with optional metadata (a JSON object named headers)
--- and an optional `Delay`. Return the `MsgId` of the just created `Message`.
+-- and an optional `Delay`. Returns the `MsgId` of the just created `Message`.
 send'
   :: Queue        -- ^ The queue to work with
   -> Value        -- ^ A JSON object sent as a message to the queue
@@ -127,7 +127,7 @@ send' Queue{..} v@(Object _) mv@(Just (Object _)) md =
   S.run (S.statement () $ sendMessage' qName v mv md) (unHasqlConn qPGConn)
 send' _ _ _ _  = fail "The Aeson Values must be Objects"
 
--- | Send on or more `Messages` to a `Queue`. Return the `MsgId` of just created `Message`.
+-- | Send on or more `Messages` to a `Queue`. Returns the `MsgId` of just created `Message`.
 batchSend
   :: Queue          -- ^ The queue to work with
   -> V.Vector Value -- ^ A vector of JSON objects sent as messages to the queue
@@ -138,7 +138,7 @@ batchSend Queue{..} v =
     else fail "All Aeson Values of the Vector must be Objects"
 
 -- | Send on or more `Messages` to a `Queue` with optional headers (a JSON object of metadata)
--- and an optional `Delay`. Return `MsgId`s of just created `Messages`.
+-- and an optional `Delay`. Returns `MsgId`s of just created `Messages`.
 batchSend'
   :: Queue                  -- ^ The queue to work with
   -> V.Vector Value         -- ^ A vector of JSON objects sent as messages to the queue
