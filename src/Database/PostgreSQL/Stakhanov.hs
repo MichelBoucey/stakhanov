@@ -1,3 +1,5 @@
+-- | This Haskell library implements the most of [PGMQ](https://github.com/pgmq/pgmq) [API functions](https://pgmq.github.io/pgmq/api/sql/functions/) based upon Hasql ecosystem and Vector and should be used qualified.
+
 module Database.PostgreSQL.Stakhanov
  (
 
@@ -108,9 +110,9 @@ drop Queue{..} =
 -- | Send a single `Message` to a `Queue`.
 -- Returns the `MsgId` of the just created `Message`.
 send
-  :: Queue -- ^ The queue to work with
-  -> Value -- ^ A JSON object to send as a message to the queue
-  -> IO (Either S.SessionError MsgId)
+  :: Queue                            -- ^ The queue to work with
+  -> Value                            -- ^ A JSON object to send as a message to the queue
+  -> IO (Either S.SessionError MsgId) -- ^ Returns the message ID of the just created message
 send Queue{..} v@(Object _) =
   S.run (S.statement (qName,v) sendMessage) (unHasqlConn qPGConn)
 send _         _            = fail "The Aeson Value must be an Object"
@@ -118,20 +120,20 @@ send _         _            = fail "The Aeson Value must be an Object"
 -- | Send a single `Message` to a `Queue` with optional metadata (a JSON object named headers)
 -- and an optional `Delay`. Returns the `MsgId` of the just created `Message`.
 send'
-  :: Queue        -- ^ The queue to work with
-  -> Value        -- ^ A JSON object sent as a message to the queue
-  -> Maybe Value  -- ^ Maybe a JSON object sent as headers/metadata to the queue
-  -> Maybe Delay  -- ^ Maybe a time before which the message becomes visible
-  -> IO (Either S.SessionError MsgId)
+  :: Queue                            -- ^ The queue to work with
+  -> Value                            -- ^ A JSON object sent as a message to the queue
+  -> Maybe Value                      -- ^ Maybe a JSON object sent as headers/metadata to the queue
+  -> Maybe Delay                      -- ^ Maybe a time before which the message becomes visible
+  -> IO (Either S.SessionError MsgId) -- ^ Returns the message ID of the just created message
 send' Queue{..} v@(Object _) mv@(Just (Object _)) md =
   S.run (S.statement () $ sendMessage' qName v mv md) (unHasqlConn qPGConn)
 send' _ _ _ _  = fail "The Aeson Values must be Objects"
 
 -- | Send on or more `Messages` to a `Queue`. Returns the `MsgId` of just created `Message`.
 batchSend
-  :: Queue          -- ^ The queue to work with
-  -> V.Vector Value -- ^ A vector of JSON objects sent as messages to the queue
-  -> IO (Either S.SessionError (V.Vector MsgId))
+  :: Queue                                       -- ^ The queue to work with
+  -> V.Vector Value                              -- ^ A vector of JSON objects sent as messages to the queue
+  -> IO (Either S.SessionError (V.Vector MsgId)) -- ^ Returns a vector of message IDs of just created messages
 batchSend Queue{..} v =
   if allJSON v
     then S.run (S.statement () $ sendMessages qName v) (unHasqlConn qPGConn)
@@ -140,11 +142,11 @@ batchSend Queue{..} v =
 -- | Send on or more `Messages` to a `Queue` with optional headers (a JSON object of metadata)
 -- and an optional `Delay`. Returns `MsgId`s of just created `Messages`.
 batchSend'
-  :: Queue                  -- ^ The queue to work with
-  -> V.Vector Value         -- ^ A vector of JSON objects sent as messages to the queue
-  -> Maybe (V.Vector Value) -- ^ Maybe a vector of JSON objects sent as headers/metadata. Its length must be the same as the vector of messages
-  -> Maybe Delay            -- ^ Maybe a time before which messages becomes visible
-  -> IO (Either S.SessionError (V.Vector MsgId))
+  :: Queue                                       -- ^ The queue to work with
+  -> V.Vector Value                              -- ^ A vector of JSON objects sent as messages to the queue
+  -> Maybe (V.Vector Value)                      -- ^ Maybe a vector of JSON objects sent as headers/metadata. Its length must be the same as the vector of messages
+  -> Maybe Delay                                 -- ^ Maybe a time before which messages becomes visible
+  -> IO (Either S.SessionError (V.Vector MsgId)) -- ^ Returns a vector of message IDs of just created messages
 batchSend' Queue{..} vv mvv md =
   if allJSON vv && maybe True allJSON mvv
     then
