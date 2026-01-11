@@ -5,7 +5,7 @@ module Database.PostgreSQL.Stakhanov.Metrics
    metrics
  , allMetrics
 
- -- * Queue metric getters
+ -- * Queue metrics getters
  , getQueueLength
  , getNewestMsgAge
  , getOldestMsgAge
@@ -25,18 +25,18 @@ import qualified Hasql.Session                            as S
 
 -- | Get `Queue`'s `Metrics`.
 --
--- > λ: metrics co MyQueue
--- > Right (Queue {queueName = "MyQueue", queueMetrics = Just (Metrics {queueLength = 4, newestMsgAge = 272336, oldestMsgAge = 798677, totalMessages = 4, scrapeTime = 2025-12-18 14:23:41.714705 UTC, queueVisibleLength = 4}), queueDetails = Nothing})
+-- > λ: metrics MyQueue
+-- > Right (Queue {qName = "MyQueue", qPGConn = "a Hasql connection", qDetails = Nothing, qMetrics = Just (Metrics {queueLength = 24, newestMsgAge = Just 447278, oldestMsgAge = Just 2192954, totalMessages = 27, scrapeTime = 2026-01-09 19:53:59.503568 UTC, queueVisibleLength = 24})})
 --
 metrics
-  :: Queue        -- ^ The name of the queue
-  -> IO (Either S.SessionError Queue)
+  :: Queue                            -- ^ The name of the queue
+  -> IO (Either S.SessionError Queue) -- ^ The queue with metrics added
 metrics q@Queue{..} =
   S.run (S.statement qName getMetrics) (unHasqlConn qPGConn) >>= pureMap addMetrics
   where
     addMetrics m = q { qMetrics = Just $ tupleToMetrics m }
 
--- | Get `Metrics` of all created `Queue`s
+-- | Get `Metrics` of all created `Queue`s.
 allMetrics
   :: Queue -- ^ The connection to PostgreSQL
   -> IO (Either S.SessionError (V.Vector Queue))
@@ -64,7 +64,7 @@ getTotalMessages :: Queue -> Maybe Int64
 getTotalMessages (Queue _ _ _ (Just Metrics{..})) = Just totalMessages
 getTotalMessages (Queue _ _ _ Nothing)            = Nothing
 
--- | The current timestamp
+-- | The current timestamp.
 getScrapeTime :: Queue -> Maybe UTCTime
 getScrapeTime (Queue _ _ _ (Just Metrics{..})) = Just scrapeTime
 getScrapeTime (Queue _ _ _ Nothing)            = Nothing
