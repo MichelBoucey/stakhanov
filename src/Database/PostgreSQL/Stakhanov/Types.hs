@@ -14,6 +14,7 @@ type Milliseconds = Int32
 type MsgId        = Int64
 type MsgIds       = Vector MsgId
 type Messages     = Vector Message
+type Queues       = Vector Queue
 
 newtype HasqlConn = HasqlConn { unHasqlConn :: C.Connection }
 

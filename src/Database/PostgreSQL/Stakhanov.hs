@@ -1,4 +1,4 @@
--- | This Haskell library, based upon [Hasql](https://hackage.haskell.org/package/hasql) ecosystem and [Vector](https://hackage.haskell.org/package/vector), implements the most of [PGMQ](https://github.com/pgmq/pgmq) [API functions](https://pgmq.github.io/pgmq/api/sql/functions/) and should be used qualified.
+-- | This Haskell library, based upon [Hasql](https://hackage.haskell.org/package/hasql)'s ecosystem and [Vector](https://hackage.haskell.org/package/vector), implements the most of [PGMQ](https://github.com/pgmq/pgmq) [API functions](https://pgmq.github.io/pgmq/api/sql/functions/) and should be used qualified.
 
 module Database.PostgreSQL.Stakhanov
  (
@@ -96,15 +96,15 @@ declare t c = Queue t (HasqlConn c) Nothing Nothing
 -- | Permanently deletes all `Messages` in the given `Queue`.
 -- Returns the number of `Messages` that were deleted.
 purge
-  :: Queue        -- ^ The queue to work with
-  -> IO (Either S.SessionError Int64)
+  :: Queue                            -- ^ The queue to work with
+  -> IO (Either S.SessionError Int64) -- ^ Returns the number of messages that were deleted
 purge Queue{..} =
   S.run (S.statement qName purgeQueue) (unHasqlConn qPGConn)
 
 -- | Deletes a `Queue` and its archive.
 drop
-  :: Queue        -- ^ The queue to work with
-  -> IO (Either S.SessionError Bool)
+  :: Queue                           -- ^ The queue to work with
+  -> IO (Either S.SessionError Bool) -- ^ Returns `True` in case of deletion
 drop Queue{..} =
   S.run (S.statement qName dropQueue) (unHasqlConn qPGConn)
 
@@ -134,7 +134,7 @@ send' _ _ _ _  = fail "The Aeson Values must be Objects"
 batchSend
   :: Queue                                       -- ^ The queue to work with
   -> V.Vector Value                              -- ^ A vector of JSON objects sent as messages to the queue
-  -> IO (Either S.SessionError (V.Vector MsgId)) -- ^ Returns a vector of message IDs of just created messages
+  -> IO (Either S.SessionError MsgIds) -- ^ Returns a vector of message IDs of just created messages
 batchSend Queue{..} v =
   if allJSON v
     then S.run (S.statement () $ sendMessages qName v) (unHasqlConn qPGConn)
@@ -147,7 +147,7 @@ batchSend'
   -> V.Vector Value                              -- ^ A vector of JSON objects sent as messages to the queue
   -> Maybe (V.Vector Value)                      -- ^ Maybe a vector of JSON objects sent as headers/metadata. Its length must be the same as the vector of messages
   -> Maybe Delay                                 -- ^ Maybe a time before which messages becomes visible
-  -> IO (Either S.SessionError (V.Vector MsgId)) -- ^ Returns a vector of message IDs of just created messages
+  -> IO (Either S.SessionError MsgIds) -- ^ Returns a vector of message IDs of just created messages
 batchSend' Queue{..} vv mvv md =
   if allJSON vv && maybe True allJSON mvv
     then
@@ -156,7 +156,7 @@ batchSend' Queue{..} vv mvv md =
         else fail "The vector of headers must be equal to the vector of messages"
     else fail "All Aeson Values of Vectors must be Objects"
 
--- | Read one or more `Messages` from a `Queue`. The `Visibility Timeout` (`VT`) specifies the amount of time
+-- | Read one or more `Messages` from a `Queue`. The /Visibility Timeout/ (`VT`) specifies the amount of time
 -- in seconds that the `Message` will be invisible to other consumers after reading.
 read
   :: Queue -- ^ The queue to work with
@@ -167,7 +167,7 @@ read Queue{..} v q =
   S.run (S.statement (qName,v,q) readMessages) (unHasqlConn qPGConn) >>= pureMap maybeMessages
 
 -- | Same as `read`. Also provides convenient long-poll functionality. When there are no `Messages` in the `Queue`,
--- the function call will wait for `max_poll_seconds` in duration before returning. If messages reach the queue
+-- the function call will wait for /max_poll_seconds/ in duration before returning. If messages reach the queue
 -- during that duration, they will be read and returned immediately.
 readWithPoll
   :: Queue               -- ^ The queue to work with
@@ -201,11 +201,11 @@ archive Queue{..} i =
   S.run (S.statement (qName,i) archiveMessage) (unHasqlConn qPGConn)
 
 -- | Deletes a batch of requested `Messages` from the specified `Queue` and inserts them into the `Queue`'s archive.
--- Returns a `Vector` of `MsgId` that were successfully archived.
+-- Returns a `V.Vector` of `MsgId` that were successfully archived.
 batchArchive
   :: Queue          -- ^ The queue to work with
   -> V.Vector MsgId -- ^ A vector of message IDs to archive
-  -> IO (Either S.SessionError (V.Vector MsgId))
+  -> IO (Either S.SessionError MsgIds)
 batchArchive Queue{..} v =
   S.run (S.statement () $ archiveMessages qName v) (unHasqlConn qPGConn)
 
@@ -220,7 +220,7 @@ delete Queue{..} i = S.run (S.statement (qName,i) deleteMessage) (unHasqlConn qP
 batchDelete
   :: Queue  -- ^ The queue to work with
   -> MsgIds -- ^ The vector of message IDs to delete
-  -> IO (Either S.SessionError (V.Vector MsgId))
+  -> IO (Either S.SessionError MsgIds)
 batchDelete Queue{..} v =
   S.run (S.statement () $ deleteMessages qName v) (unHasqlConn qPGConn)
 
@@ -231,7 +231,7 @@ batchDelete Queue{..} v =
 --
 listQueues
   :: C.Connection -- ^ A Hasql connection
-  -> IO (Either S.SessionError (V.Vector Queue))
+  -> IO (Either S.SessionError Queues)
 listQueues c =
   S.run (S.statement () getQueuesDetails) c >>= pureMap (toQueue <$>)
   where
@@ -245,7 +245,7 @@ listQueues c =
 -- | Same as `listQueues`, with a `Queue` as parameter.
 listQueues'
   :: Queue -- ^ A queue to use its connection to reach PostgreSQL and add this connection to each queue collected
-  -> IO (Either S.SessionError (V.Vector Queue))
+  -> IO (Either S.SessionError Queues)
 listQueues' Queue{..} = listQueues (unHasqlConn qPGConn)
 
 -- | Add `Details` information, collected with `listQueues`, to a `Queue` record.
@@ -255,9 +255,9 @@ listQueues' Queue{..} = listQueues (unHasqlConn qPGConn)
 -- > Just (Queue {qName = "test", qPGConn = "a Hasql connection", qDetails = Just (Details {createdAt = 2025-12-18 14:33:41.563365 UTC, isPartitioned = False, isUnlogged = False}), qMetrics = Nothing})
 --
 details
-  :: Queue          -- ^ The queue to get details for
-  -> V.Vector Queue -- ^ A list of queues obtained from on e of listQueues functions
-  -> Maybe Queue    -- ^ The queue with details added
+  :: Queue       -- ^ The queue to get details for
+  -> Queues      -- ^ A vector of queues obtained from one of the listQueues functions
+  -> Maybe Queue -- ^ The queue with details added
 details q vq =
   case get q vq of
     Nothing -> Nothing
@@ -287,7 +287,7 @@ getIsUnlogged :: Queue -> Maybe Bool
 getIsUnlogged (Queue _ _ (Just Details{..}) _) = Just isUnlogged
 getIsUnlogged (Queue _ _ Nothing _)            = Nothing
 
--- | Sets the Visibility Timeout of one or many `Messages` to a specified time duration
+-- | Sets the /Visibility Timeout/ (`VT`) of one or many `Messages` to a specified time duration
 -- in the future. Returns the `Messages` that were updated.
 batchSetVT
   :: Queue   -- ^ The queue to work with
