@@ -28,9 +28,9 @@ maybeMessages
   :: Vector (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value)
   -> Maybe Messages
 maybeMessages v =
-    if V.null v
-      then Nothing
-      else Just $ tupleToMessage <$> v
+  if V.null v
+    then Nothing
+    else Just $ tupleToMessage <$> v
 
 tupleToDetails :: (UTCTime,Bool,Bool) -> Details
 tupleToDetails (e1,e2,e3) =
