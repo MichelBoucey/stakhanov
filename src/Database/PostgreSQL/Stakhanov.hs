@@ -181,7 +181,7 @@ readWithPoll Queue{..} v q mmp mpi =
 
 -- | Reads one or more `Messages` from a `Queue` and /deletes them upon read/.
 --
--- > λ: pop MyQueue 2
+-- > λ: pop myQueue 2
 -- > Right (Just [Message {msgId = 2, readCount = 13, enqueuedAt = 2025-12-09 09:51:50.259464 UTC, visibilityTimeout = 2025-12-15 10:46:41.096843 UTC, message = Object (fromList [("Action",String "hug"),("Quantity",Number 3)]), headers = Nothing},Message {msgId = 3, readCount = 2, enqueuedAt = 2025-12-15 10:44:45.612983 UTC, visibilityTimeout = 2025-12-29 18:04:32.938332 UTC, message = Object (fromList [("Action",String "hug"),("Quantity",Number 5)]), headers = Object (fromList [("Reason",String empathy"")])}])
 --
 pop
@@ -251,7 +251,7 @@ listQueues' Queue{..} = listQueues (unHasqlConn qPGConn)
 -- | Add `Details` information, collected with `listQueues`, to a `Queue` record.
 --
 -- > λ: Right list <- listQueues conn
--- > λ: details MyQueue list
+-- > λ: details myQueue list
 -- > Just (Queue {qName = "test", qPGConn = "a Hasql connection", qDetails = Just (Details {createdAt = 2025-12-18 14:33:41.563365 UTC, isPartitioned = False, isUnlogged = False}), qMetrics = Nothing})
 --
 details
