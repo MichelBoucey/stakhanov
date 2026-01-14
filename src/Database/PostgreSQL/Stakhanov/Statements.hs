@@ -52,8 +52,8 @@ sendMessage =
     sql = "select * from pgmq.send($1::text,$2::jsonb)"
     encoder =
       contrazip2
-        (E.param (E.nonNullable E.text))
-        (E.param (E.nonNullable E.jsonb))
+        (E.param $ E.nonNullable E.text)
+        (E.param $ E.nonNullable E.jsonb)
     decoder = D.singleRow $ D.column $ D.nonNullable D.int8
 
 sendMessage' :: T.Text -> Value -> Maybe Value -> Maybe Delay -> Statement () Int64
@@ -93,9 +93,9 @@ readMessages =
     sql = "select " <> columnsMessage <> " from pgmq.read($1,$2,$3)"
     encoder =
       contrazip3
-        (E.param (E.nonNullable E.text))
-        (E.param (E.nonNullable E.int4))
-        (E.param (E.nonNullable E.int4))
+        (E.param $ E.nonNullable E.text)
+        (E.param $ E.nonNullable E.int4)
+        (E.param $ E.nonNullable E.int4)
 
 popMessages :: Statement (T.Text,Int32) (V.Vector (Int64, Int32, UTCTime, UTCTime, Value, Maybe Value))
 popMessages =
@@ -104,8 +104,8 @@ popMessages =
     sql = "select " <> columnsMessage <> " from pgmq.pop($1,$2)"
     encoder =
       contrazip2
-        (E.param (E.nonNullable E.text))
-        (E.param (E.nonNullable E.int4))
+        (E.param $ E.nonNullable E.text)
+        (E.param $ E.nonNullable E.int4)
 
 getMetrics :: Statement T.Text (Int64, Maybe Int32, Maybe Int32, Int64, UTCTime, Int64)
 getMetrics =
