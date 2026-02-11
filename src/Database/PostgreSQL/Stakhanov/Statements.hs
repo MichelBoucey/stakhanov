@@ -78,7 +78,7 @@ sendMessages' q vv mvv md =
       decoder = D.rowVector $ D.column $ D.nonNullable D.int8
   in dynamicallyParameterized snippet decoder True
 
-readMessagesWithPoll :: T.Text -> Int32 -> Int32 -> Maybe Int32 -> Maybe Int32 -> Statement () (V.Vector (Int64, Int32, UTCTime, UTCTime, UTCTime, Value, Maybe Value))
+readMessagesWithPoll :: T.Text -> Int32 -> Int32 -> Maybe Int32 -> Maybe Int32 -> Statement () (V.Vector (Int64, Int32, UTCTime, Maybe UTCTime, UTCTime, Value, Maybe Value))
 readMessagesWithPoll q vt qty mmp mpi =
   let mp = maybe 5 id mmp
       pi = maybe 100 id mpi
@@ -86,7 +86,7 @@ readMessagesWithPoll q vt qty mmp mpi =
                 mconcat (L.intersperse "," [S.param q, S.param vt, S.param qty, S.param mp, S.param pi]) <> ")"
   in dynamicallyParameterized snippet tupleMessageDecoder True
 
-readMessages :: Statement (T.Text,Int32,Int32) (V.Vector (Int64, Int32, UTCTime, UTCTime, UTCTime, Value, Maybe Value))
+readMessages :: Statement (T.Text,Int32,Int32) (V.Vector (Int64, Int32, UTCTime, Maybe UTCTime, UTCTime, Value, Maybe Value))
 readMessages =
   Statement sql encoder tupleMessageDecoder True
   where
@@ -97,7 +97,7 @@ readMessages =
         (E.param $ E.nonNullable E.int4)
         (E.param $ E.nonNullable E.int4)
 
-popMessages :: Statement (T.Text,Int32) (V.Vector (Int64, Int32, UTCTime, UTCTime, UTCTime, Value, Maybe Value))
+popMessages :: Statement (T.Text,Int32) (V.Vector (Int64, Int32, UTCTime, Maybe UTCTime, UTCTime, Value, Maybe Value))
 popMessages =
   Statement sql encoder tupleMessageDecoder True
   where
@@ -157,20 +157,20 @@ deleteMessages q v =
       decoder = D.rowVector (D.column (D.nonNullable D.int8))
   in dynamicallyParameterized snippet decoder True
 
-setMessagesVT :: T.Text -> V.Vector Int64 -> Int32 -> Statement () (V.Vector (Int64, Int32, UTCTime, UTCTime, UTCTime, Value, Maybe Value))
+setMessagesVT :: T.Text -> V.Vector Int64 -> Int32 -> Statement () (V.Vector (Int64, Int32, UTCTime, Maybe UTCTime, UTCTime, Value, Maybe Value))
 setMessagesVT q v s =
   let snippet = "select * from pgmq.set_vt(" <> S.param q <> ","
                 <> bigintArrayEncoder v <> "," <> S.param s <> ")"
   in dynamicallyParameterized snippet tupleMessageDecoder True
 
-tupleMessageDecoder :: D.Result (V.Vector (Int64, Int32, UTCTime, UTCTime, UTCTime, Value, Maybe Value))
+tupleMessageDecoder :: D.Result (V.Vector (Int64, Int32, UTCTime, Maybe UTCTime, UTCTime, Value, Maybe Value))
 tupleMessageDecoder =
   D.rowVector $
     (,,,,,,) <$>
       D.column (D.nonNullable D.int8) <*>
       D.column (D.nonNullable D.int4) <*>
       D.column (D.nonNullable D.timestamptz) <*>
-      D.column (D.nonNullable D.timestamptz) <*>
+      D.column (D.nullable D.timestamptz) <*>
       D.column (D.nonNullable D.timestamptz) <*>
       D.column (D.nonNullable D.jsonb) <*>
       D.column (D.nullable D.jsonb)

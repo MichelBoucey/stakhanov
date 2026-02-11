@@ -45,10 +45,10 @@ data Message =
     { msgId             :: MsgId
     , readCount         :: Int32
     , enqueuedAt        :: UTCTime
-    , lastReadAt        :: UTCTime
+    , lastReadAt        :: Maybe UTCTime
     , visibilityTimeout :: UTCTime
-    , message           :: !Value
-    , headers           :: !(Maybe Value)
+    , message           :: Value
+    , headers           :: Maybe Value
     } deriving (Show)
 
 instance Eq Message where

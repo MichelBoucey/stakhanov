@@ -25,7 +25,7 @@ allJSON :: Vector Value -> Bool
 allJSON = V.all isJSON
 
 maybeMessages
-  :: Vector (Int64, Int32, UTCTime, UTCTime, UTCTime, Value, Maybe Value)
+  :: Vector (Int64, Int32, UTCTime, Maybe UTCTime, UTCTime, Value, Maybe Value)
   -> Maybe Messages
 maybeMessages v =
   if V.null v
@@ -65,7 +65,7 @@ tupleToMetrics (e1,e2,e3,e4,e5,e6) =
     , queueVisibleLength = e6 }
 
 tupleToMessage
-  :: (Int64, Int32, UTCTime, UTCTime, UTCTime, Value, Maybe Value)
+  :: (Int64, Int32, UTCTime, Maybe UTCTime, UTCTime, Value, Maybe Value)
   -> Message
 tupleToMessage (e1,e2,e3,e4,e5,e6,e7) =
   Message
