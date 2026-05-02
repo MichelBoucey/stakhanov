@@ -27,7 +27,7 @@ getQueuesDetails :: Statement () (V.Vector (T.Text, (UTCTime, Bool, Bool)))
 getQueuesDetails =
   preparable sql E.noParams decoder
   where
-    sql = "select queue_name,created_at,is_partitioned,is_unlogged from pgmq.list_queues()"
+    sql = "select queue_name::text,created_at,is_partitioned,is_unlogged from pgmq.list_queues()"
     decoder =
       D.rowVector $
         (,) <$>
