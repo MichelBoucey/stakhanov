@@ -1,6 +1,6 @@
 cabal-version:      3.0
 name:               stakhanov
-version:            0.1.1.0
+version:            0.1.0.0
 synopsis:           A Haskell PGMQ client
 description:
   A fast Haskell PGMQ client for busy workers
