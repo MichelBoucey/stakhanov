@@ -2,7 +2,6 @@ module Database.PostgreSQL.Stakhanov.Statements where
 
 import           Contravariant.Extras.Contrazip         (contrazip2, contrazip3)
 import           Data.Aeson
-import           Data.ByteString
 import           Data.Int
 import qualified Data.List                              as L
 import           Data.Maybe                             (fromMaybe)
@@ -13,7 +12,6 @@ import           Database.PostgreSQL.Stakhanov.Internal
 import           Database.PostgreSQL.Stakhanov.Types
 import qualified Hasql.Decoders                         as D
 import qualified Hasql.DynamicStatements.Snippet        as S
-import           Hasql.DynamicStatements.Statement
 import qualified Hasql.Encoders                         as E
 import           Hasql.Statement
 import qualified Hasql.TH                               as TH
@@ -27,9 +25,9 @@ createUnloggedQueue = [TH.resultlessStatement|select from pgmq.create_unlogged($
 
 getQueuesDetails :: Statement () (V.Vector (T.Text, (UTCTime, Bool, Bool)))
 getQueuesDetails =
-  Statement sql E.noParams decoder True
+  preparable sql E.noParams decoder
   where
-    sql = "select queue_name,created_at,is_partitioned,is_unlogged from pgmq.list_queues()"
+    sql = "select queue_name::text,created_at,is_partitioned,is_unlogged from pgmq.list_queues()"
     decoder =
       D.rowVector $
         (,) <$>
@@ -47,7 +45,7 @@ dropQueue = [TH.singletonStatement|select pgmq.drop_queue($1::text)::bool|]
 
 sendMessage :: Statement (T.Text,Value) Int64
 sendMessage =
-  Statement sql encoder decoder True
+  preparable sql encoder decoder
   where
     sql = "select * from pgmq.send($1::text,$2::jsonb)"
     encoder =
@@ -62,13 +60,13 @@ sendMessage' q v mv mi =
         "select * from pgmq.send(" <> S.param q <> ","
         <> S.param v <> maybeHeaders mv <> maybeDelay mi <> ")"
       decoder = D.singleRow $ D.column $ D.nonNullable D.int8
-  in dynamicallyParameterized snippet decoder True
+  in S.toStatement snippet decoder
 
 sendMessages :: T.Text -> (V.Vector Value) -> Statement () (V.Vector Int64)
 sendMessages q msgs =
   let snippet = "select * from pgmq.send_batch(" <> S.param q <> "," <> jsonbArrayEncoder msgs <> ")"
       decoder = D.rowVector $ D.column $ D.nonNullable D.int8
-  in dynamicallyParameterized snippet decoder True
+  in S.toStatement snippet decoder
 
 sendMessages' :: T.Text -> (V.Vector Value) -> Maybe (V.Vector Value) -> Maybe Delay -> Statement () (V.Vector Int64)
 sendMessages' q vv mvv md =
@@ -76,7 +74,7 @@ sendMessages' q vv mvv md =
         "select * from pgmq.send_batch(" <> S.param q <> "," <> jsonbArrayEncoder vv
         <> (fromMaybe mempty $ (mappend "," . jsonbArrayEncoder) <$> mvv) <> maybeDelay md <> ")"
       decoder = D.rowVector $ D.column $ D.nonNullable D.int8
-  in dynamicallyParameterized snippet decoder True
+  in S.toStatement snippet decoder
 
 readMessagesWithPoll :: T.Text -> Int32 -> Int32 -> Maybe Int32 -> Maybe Int32 -> Statement () (V.Vector (Int64, Int32, UTCTime, Maybe UTCTime, UTCTime, Value, Maybe Value))
 readMessagesWithPoll q vt qty mmp mpi =
@@ -84,11 +82,11 @@ readMessagesWithPoll q vt qty mmp mpi =
       pi = maybe 100 id mpi
       snippet = "select " <> S.sql columnsMessage <> " from pgmq.read_with_poll(" <>
                 mconcat (L.intersperse "," [S.param q, S.param vt, S.param qty, S.param mp, S.param pi]) <> ")"
-  in dynamicallyParameterized snippet tupleMessageDecoder True
+  in S.toStatement snippet tupleMessageDecoder
 
 readMessages :: Statement (T.Text,Int32,Int32) (V.Vector (Int64, Int32, UTCTime, Maybe UTCTime, UTCTime, Value, Maybe Value))
 readMessages =
-  Statement sql encoder tupleMessageDecoder True
+  preparable sql encoder tupleMessageDecoder
   where
     sql = "select " <> columnsMessage <> " from pgmq.read($1,$2,$3)"
     encoder =
@@ -99,7 +97,7 @@ readMessages =
 
 popMessages :: Statement (T.Text,Int32) (V.Vector (Int64, Int32, UTCTime, Maybe UTCTime, UTCTime, Value, Maybe Value))
 popMessages =
-  Statement sql encoder tupleMessageDecoder True
+  preparable sql encoder tupleMessageDecoder
   where
     sql = "select " <> columnsMessage <> " from pgmq.pop($1,$2)"
     encoder =
@@ -109,7 +107,7 @@ popMessages =
 
 getMetrics :: Statement T.Text (Int64, Maybe Int32, Maybe Int32, Int64, UTCTime, Int64)
 getMetrics =
-  Statement sql encoder decoder True
+  preparable sql encoder decoder
   where
     sql = "select " <> columnsMetrics <> " from pgmq.metrics($1)"
     encoder = E.param (E.nonNullable E.text)
@@ -125,7 +123,7 @@ getMetrics =
 
 getAllMetrics :: Statement () (V.Vector (T.Text, Int64, Maybe Int32, Maybe Int32, Int64, UTCTime, Int64))
 getAllMetrics =
-  Statement sql E.noParams decoder True
+  preparable sql E.noParams decoder
   where
     sql = "select queue_name," <> columnsMetrics <> " from pgmq.metrics_all()"
     decoder =
@@ -146,7 +144,7 @@ archiveMessages :: T.Text -> (V.Vector Int64) -> Statement () (V.Vector Int64)
 archiveMessages q v =
   let snippet = "select * from pgmq.archive(" <> S.param q <> "," <> bigintArrayEncoder v <> ")"
       decoder = D.rowVector (D.column (D.nonNullable D.int8))
-  in dynamicallyParameterized snippet decoder True
+  in S.toStatement snippet decoder
 
 deleteMessage :: Statement (T.Text,Int64) Bool
 deleteMessage = [TH.singletonStatement|select pgmq.delete($1::text,$2::int8)::bool|]
@@ -155,13 +153,13 @@ deleteMessages :: T.Text -> (V.Vector Int64) -> Statement () (V.Vector Int64)
 deleteMessages q v =
   let snippet = "select * from pgmq.delete(" <> S.param q <> "," <> bigintArrayEncoder v <> ")"
       decoder = D.rowVector (D.column (D.nonNullable D.int8))
-  in dynamicallyParameterized snippet decoder True
+  in S.toStatement snippet decoder
 
 setMessagesVT :: T.Text -> V.Vector Int64 -> Int32 -> Statement () (V.Vector (Int64, Int32, UTCTime, Maybe UTCTime, UTCTime, Value, Maybe Value))
 setMessagesVT q v s =
   let snippet = "select * from pgmq.set_vt(" <> S.param q <> ","
                 <> bigintArrayEncoder v <> "," <> S.param s <> ")"
-  in dynamicallyParameterized snippet tupleMessageDecoder True
+  in S.toStatement snippet tupleMessageDecoder
 
 tupleMessageDecoder :: D.Result (V.Vector (Int64, Int32, UTCTime, Maybe UTCTime, UTCTime, Value, Maybe Value))
 tupleMessageDecoder =
@@ -175,9 +173,9 @@ tupleMessageDecoder =
       D.column (D.nonNullable D.jsonb) <*>
       D.column (D.nullable D.jsonb)
 
-columnsMessage :: ByteString
+columnsMessage :: T.Text
 columnsMessage = "msg_id,read_ct,enqueued_at,last_read_at,vt,message,headers"
 
-columnsMetrics :: ByteString
+columnsMetrics :: T.Text
 columnsMetrics = "queue_length,newest_msg_age_sec,oldest_msg_age_sec,total_messages,scrape_time,queue_visible_length"
 

@@ -21,7 +21,9 @@ import qualified Data.Vector                              as V
 import           Database.PostgreSQL.Stakhanov.Internal
 import           Database.PostgreSQL.Stakhanov.Statements
 import           Database.PostgreSQL.Stakhanov.Types
-import qualified Hasql.Session                            as S
+import           Hasql.Connection
+import           Hasql.Errors
+import           Hasql.Session
 
 -- | Get `Queue`'s `Metrics`.
 --
@@ -30,19 +32,19 @@ import qualified Hasql.Session                            as S
 --
 metrics
   :: Queue                            -- ^ The name of the queue
-  -> IO (Either S.SessionError Queue) -- ^ The queue with metrics added
+  -> IO (Either SessionError Queue) -- ^ The queue with metrics added
 metrics q@Queue{..} =
-  S.run (S.statement qName getMetrics) (unHasqlConn qPGConn) >>= pureMap addMetrics
+  use (unHasqlConn qPGConn) (statement qName getMetrics) >>= pureMap addMetrics
   where
     addMetrics m = q { qMetrics = Just $ tupleToMetrics m }
 
 -- | Get `Metrics` of all created `Queue`s.
 allMetrics
   :: Queue -- ^ The connection to PostgreSQL
-  -> IO (Either S.SessionError (V.Vector Queue))
+  -> IO (Either SessionError (V.Vector Queue))
 allMetrics Queue{..} =
   let c = unHasqlConn qPGConn
-  in S.run (S.statement () getAllMetrics) c >>= pureMap (tupleToQueueWithMetrics c <$>)
+  in use c (statement () getAllMetrics) >>= pureMap (tupleToQueueWithMetrics c <$>)
 
 -- | Number of messages currently in the queue.
 getQueueLength :: Queue -> Maybe Int64

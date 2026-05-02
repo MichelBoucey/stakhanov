@@ -3,16 +3,16 @@
 
 module Database.PostgreSQL.Stakhanov.Connection where
 
-import qualified Data.Text                           as T
+import qualified Data.Text                 as T
 import           Hasql.Connection
-import           Hasql.Connection.Setting            (connection)
-import           Hasql.Connection.Setting.Connection (string)
+import           Hasql.Connection.Settings (connectionString)
+import           Hasql.Errors
 
 -- | Get a local PostgreSQL connection to a Docker container of PGMQ, with the default PostgreSQL connection string "__postgres:\/\/postgres:postgres@0.0.0.0:5432/postgres__".
 acquireLocalPGConn :: IO (Either ConnectionError Connection)
-acquireLocalPGConn = acquire [connection $ string "postgres://postgres:postgres@0.0.0.0:5432/postgres"]
+acquireLocalPGConn = acquire $ connectionString "postgres://postgres:postgres@0.0.0.0:5432/postgres"
 
 -- | Get a PostgreSQL connection configured with the given PostgreSQL connection string.
 acquirePGConn :: T.Text -> IO (Either ConnectionError Connection)
-acquirePGConn t = acquire [connection $ string t]
+acquirePGConn t = acquire $ connectionString t
 
