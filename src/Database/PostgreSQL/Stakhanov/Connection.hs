@@ -3,9 +3,9 @@
 
 module Database.PostgreSQL.Stakhanov.Connection where
 
-import qualified Data.Text                           as T
+import qualified Data.Text                 as T
 import           Hasql.Connection
-import           Hasql.Connection.Settings            (connectionString)
+import           Hasql.Connection.Settings (connectionString)
 import           Hasql.Errors
 
 -- | Get a local PostgreSQL connection to a Docker container of PGMQ, with the default PostgreSQL connection string "__postgres:\/\/postgres:postgres@0.0.0.0:5432/postgres__".
