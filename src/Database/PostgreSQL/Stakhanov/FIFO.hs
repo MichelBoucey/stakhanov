@@ -65,10 +65,10 @@ readGroupedRRWithPoll Queue{..} v q mmp mpi =
 
 -- https://pgmq.github.io/pgmq/latest/fifo-queues/#pgmqread_grouped_headqueue_name-vt-qty
 readGroupedHead
- :: Queue
- -> VT
- -> Qty
- -> IO (Either SessionError (Maybe Messages))
+  :: Queue
+  -> VT
+  -> Qty
+  -> IO (Either SessionError (Maybe Messages))
 readGroupedHead = undefined
 
 -- https://pgmq.github.io/pgmq/latest/api/sql/functions/#create_fifo_index
