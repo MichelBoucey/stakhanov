@@ -86,14 +86,15 @@ readMessagesWithPoll q vt qty mmp mpi =
 
 readMessages :: Statement (T.Text,Int32,Int32) (V.Vector (Int64, Int32, UTCTime, Maybe UTCTime, UTCTime, Value, Maybe Value))
 readMessages =
-  preparable sql encoder tupleMessageDecoder
+  preparable sql readTupleEncoder tupleMessageDecoder
   where
     sql = "select " <> columnsMessage <> " from pgmq.read($1,$2,$3)"
-    encoder =
-      contrazip3
-        (E.param $ E.nonNullable E.text)
-        (E.param $ E.nonNullable E.int4)
-        (E.param $ E.nonNullable E.int4)
+
+readGroupedMessages :: Statement (T.Text,Int32,Int32) (V.Vector (Int64, Int32, UTCTime, Maybe UTCTime, UTCTime, Value, Maybe Value))
+readGroupedMessages =
+  preparable sql readTupleEncoder tupleMessageDecoder
+  where
+    sql = "select " <> columnsMessage <> " from pgmq.read_grouped($1,$2,$3)"
 
 popMessages :: Statement (T.Text,Int32) (V.Vector (Int64, Int32, UTCTime, Maybe UTCTime, UTCTime, Value, Maybe Value))
 popMessages =
@@ -160,6 +161,13 @@ setMessagesVT q v s =
   let snippet = "select * from pgmq.set_vt(" <> S.param q <> ","
                 <> bigintArrayEncoder v <> "," <> S.param s <> ")"
   in S.toStatement snippet tupleMessageDecoder
+
+readTupleEncoder :: E.Params (T.Text, Int32, Int32)
+readTupleEncoder =
+  contrazip3
+    (E.param $ E.nonNullable E.text)
+    (E.param $ E.nonNullable E.int4)
+    (E.param $ E.nonNullable E.int4)
 
 tupleMessageDecoder :: D.Result (V.Vector (Int64, Int32, UTCTime, Maybe UTCTime, UTCTime, Value, Maybe Value))
 tupleMessageDecoder =

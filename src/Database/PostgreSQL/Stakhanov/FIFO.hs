@@ -4,10 +4,10 @@ module Database.PostgreSQL.Stakhanov.FIFO
   (
 
   -- * Reading FIFO Messages
-    readGroupedRR
-  , readGroupedRRWithPoll
-  , readGrouped
+    readGrouped
   , readGroupedWithPoll
+  , readGroupedRR
+  , readGroupedRRWithPoll
   , readGroupedHead
 
   -- * Utils
@@ -16,16 +16,30 @@ module Database.PostgreSQL.Stakhanov.FIFO
 
   ) where
 
--- import           Data.Int
--- import           Data.Time
--- import qualified Data.Vector                              as V
--- import           Database.PostgreSQL.Stakhanov.Internal
--- import           Database.PostgreSQL.Stakhanov.Statements
+import           Database.PostgreSQL.Stakhanov.Internal
+import           Database.PostgreSQL.Stakhanov.Statements
 import           Database.PostgreSQL.Stakhanov.Types
--- import           Hasql.Connection
+import           Hasql.Connection
 import           Hasql.Errors
--- import           Hasql.Session
+import           Hasql.Session
 
+readGrouped
+  :: Queue
+  -> VT
+  -> Qty
+  -> IO (Either SessionError (Maybe Messages))
+readGrouped Queue{..} v q =
+  use (unHasqlConn qPGConn) (statement (qName,v,q) readGroupedMessages) >>= pureMap maybeMessages
+
+-- https://pgmq.github.io/pgmq/latest/api/sql/functions/#read_grouped_with_poll
+readGroupedWithPoll
+  :: Queue              -- ^ The queue to work with
+  -> VT                 -- ^ The Visibility Timeout : the time in seconds that message(s) become invisible after reading
+  -> Qty                -- ^ The number of messages to read from the queue
+  -> Maybe Seconds      -- ^ The max_poll_seconds : the time in seconds to wait for new messages to reach the queue. Defaults to 5
+  -> Maybe Milliseconds -- ^ The milliseconds between the internal poll operations. Defaults to 100
+  -> IO (Either SessionError (Maybe Messages))
+readGroupedWithPoll = undefined
 
 -- https://pgmq.github.io/pgmq/latest/api/sql/functions/#read_grouped_rr
 readGroupedRR
@@ -44,24 +58,6 @@ readGroupedRRWithPoll
   -> Maybe Milliseconds -- ^ The milliseconds between the internal poll operations. Defaults to 100
   -> IO (Either SessionError (Maybe Messages))
 readGroupedRRWithPoll = undefined
-
--- https://pgmq.github.io/pgmq/latest/api/sql/functions/#read_grouped
-readGrouped
- :: Queue
- -> VT
- -> Qty
- -> IO (Either SessionError (Maybe Messages))
-readGrouped = undefined
-
--- https://pgmq.github.io/pgmq/latest/api/sql/functions/#read_grouped_with_poll
-readGroupedWithPoll
-  :: Queue              -- ^ The queue to work with
-  -> VT                 -- ^ The Visibility Timeout : the time in seconds that message(s) become invisible after reading
-  -> Qty                -- ^ The number of messages to read from the queue
-  -> Maybe Seconds      -- ^ The max_poll_seconds : the time in seconds to wait for new messages to reach the queue. Defaults to 5
-  -> Maybe Milliseconds -- ^ The milliseconds between the internal poll operations. Defaults to 100
-  -> IO (Either SessionError (Maybe Messages))
-readGroupedWithPoll = undefined
 
 -- https://pgmq.github.io/pgmq/latest/fifo-queues/#pgmqread_grouped_headqueue_name-vt-qty
 readGroupedHead
