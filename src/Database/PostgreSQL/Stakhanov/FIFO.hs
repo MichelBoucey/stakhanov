@@ -23,6 +23,7 @@ import           Hasql.Connection
 import           Hasql.Errors
 import           Hasql.Session
 
+-- https://pgmq.github.io/pgmq/latest/api/sql/functions/#read_grouped
 readGrouped
   :: Queue
   -> VT
@@ -39,7 +40,8 @@ readGroupedWithPoll
   -> Maybe Seconds      -- ^ The max_poll_seconds : the time in seconds to wait for new messages to reach the queue. Defaults to 5
   -> Maybe Milliseconds -- ^ The milliseconds between the internal poll operations. Defaults to 100
   -> IO (Either SessionError (Maybe Messages))
-readGroupedWithPoll = undefined
+readGroupedWithPoll Queue{..} v q mmp mpi =
+  use (unHasqlConn qPGConn) (statement () $ readGroupedMessagesWithPoll qName v q mmp mpi) >>= pureMap maybeMessages
 
 -- https://pgmq.github.io/pgmq/latest/api/sql/functions/#read_grouped_rr
 readGroupedRR
