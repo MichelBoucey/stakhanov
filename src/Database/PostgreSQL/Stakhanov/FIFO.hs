@@ -60,7 +60,8 @@ readGroupedRRWithPoll
   -> Maybe Seconds      -- ^ The max_poll_seconds : the time in seconds to wait for new messages to reach the queue. Defaults to 5
   -> Maybe Milliseconds -- ^ The milliseconds between the internal poll operations. Defaults to 100
   -> IO (Either SessionError (Maybe Messages))
-readGroupedRRWithPoll = undefined
+readGroupedRRWithPoll Queue{..} v q mmp mpi =
+  use (unHasqlConn qPGConn) (statement () $ readGroupedRRMessagesWithPoll qName v q mmp mpi) >>= pureMap maybeMessages
 
 -- https://pgmq.github.io/pgmq/latest/fifo-queues/#pgmqread_grouped_headqueue_name-vt-qty
 readGroupedHead

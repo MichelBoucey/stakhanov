@@ -110,6 +110,14 @@ readGroupedRRMessages =
   where
     sql = "select " <> columnsMessage <> " from pgmq.read_grouped_rr($1,$2,$3)"
 
+readGroupedRRMessagesWithPoll :: T.Text -> Int32 -> Int32 -> Maybe Int32 -> Maybe Int32 -> Statement () (V.Vector (Int64, Int32, UTCTime, Maybe UTCTime, UTCTime, Value, Maybe Value))
+readGroupedRRMessagesWithPoll q vt qty mmp mpi =
+  let mp = maybe 5 id mmp
+      pi = maybe 100 id mpi
+      snippet = "select " <> S.sql columnsMessage <> " from pgmq.read_grouped_rr_with_poll(" <>
+                mconcat (L.intersperse "," [S.param q, S.param vt, S.param qty, S.param mp, S.param pi]) <> ")"
+  in S.toStatement snippet tupleMessageDecoder
+
 popMessages :: Statement (T.Text,Int32) (V.Vector (Int64, Int32, UTCTime, Maybe UTCTime, UTCTime, Value, Maybe Value))
 popMessages =
   preparable sql encoder tupleMessageDecoder
