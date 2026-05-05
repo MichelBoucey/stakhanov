@@ -49,7 +49,8 @@ readGroupedRR
  -> VT
  -> Qty
  -> IO (Either SessionError (Maybe Messages))
-readGroupedRR = undefined
+readGroupedRR Queue{..} v q =
+  use (unHasqlConn qPGConn) (statement (qName,v,q) readGroupedRRMessages) >>= pureMap maybeMessages
 
 -- pgmq.read_grouped_rr_with_poll(queue_name, vt, qty, max_poll_seconds, poll_interval_ms)
 readGroupedRRWithPoll
