@@ -23,6 +23,12 @@ createQueue = [TH.resultlessStatement|select from pgmq.create($1::text)|]
 createUnloggedQueue :: Statement T.Text ()
 createUnloggedQueue = [TH.resultlessStatement|select from pgmq.create_unlogged($1::text)|]
 
+createFIFOIndexQueue :: Statement T.Text ()
+createFIFOIndexQueue = [TH.resultlessStatement|select from pgmq.create_fifo_index($1::text)|]
+
+createFIFOIndexesAllQueues :: Statement () ()
+createFIFOIndexesAllQueues = [TH.resultlessStatement|select from pgmq.create_fifo_indexes_all()|]
+
 getQueuesDetails :: Statement () (V.Vector (T.Text, (UTCTime, Bool, Bool)))
 getQueuesDetails =
   preparable sql E.noParams decoder

@@ -72,10 +72,11 @@ readGroupedHead
 readGroupedHead = undefined
 
 -- https://pgmq.github.io/pgmq/latest/api/sql/functions/#create_fifo_index
-createFIFOIndex :: Queue -> IO ()
-createFIFOIndex = undefined
+createFIFOIndex :: Queue -> IO (Either SessionError ())
+createFIFOIndex Queue{..} =
+  use (unHasqlConn qPGConn) (statement qName createFIFOIndexQueue)
 
 -- https://pgmq.github.io/pgmq/latest/api/sql/functions/#create_fifo_indexes_all
-createFIFOIndexesAll :: IO ()
-createFIFOIndexesAll = undefined
+createFIFOIndexesAll :: Connection -> IO (Either SessionError ())
+createFIFOIndexesAll c = use c (statement () createFIFOIndexesAllQueues)
 
