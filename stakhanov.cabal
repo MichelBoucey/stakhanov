@@ -30,6 +30,7 @@ library
   exposed-modules:
     Database.PostgreSQL.Stakhanov
     Database.PostgreSQL.Stakhanov.Connection
+    Database.PostgreSQL.Stakhanov.FIFO
     Database.PostgreSQL.Stakhanov.Metrics
     Database.PostgreSQL.Stakhanov.Types
 
