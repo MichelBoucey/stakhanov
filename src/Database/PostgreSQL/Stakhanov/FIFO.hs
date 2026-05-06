@@ -16,8 +16,8 @@ module Database.PostgreSQL.Stakhanov.FIFO
 
   ) where
 
+import           Database.PostgreSQL.Stakhanov.FIFO.Statements
 import           Database.PostgreSQL.Stakhanov.Internal
-import           Database.PostgreSQL.Stakhanov.Statements
 import           Database.PostgreSQL.Stakhanov.Types
 import           Hasql.Connection
 import           Hasql.Errors

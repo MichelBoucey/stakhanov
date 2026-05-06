@@ -1,6 +1,6 @@
 module Database.PostgreSQL.Stakhanov.Statements where
 
-import           Contravariant.Extras.Contrazip         (contrazip2, contrazip3)
+import           Contravariant.Extras.Contrazip         (contrazip2) -- (contrazip2, contrazip3)
 import           Data.Aeson
 import           Data.Int
 import qualified Data.List                              as L
@@ -22,12 +22,6 @@ createQueue = [TH.resultlessStatement|select from pgmq.create($1::text)|]
 
 createUnloggedQueue :: Statement T.Text ()
 createUnloggedQueue = [TH.resultlessStatement|select from pgmq.create_unlogged($1::text)|]
-
-createFIFOIndexQueue :: Statement T.Text ()
-createFIFOIndexQueue = [TH.resultlessStatement|select from pgmq.create_fifo_index($1::text)|]
-
-createFIFOIndexesAllQueues :: Statement () ()
-createFIFOIndexesAllQueues = [TH.resultlessStatement|select from pgmq.create_fifo_indexes_all()|]
 
 getQueuesDetails :: Statement () (V.Vector (T.Text, (UTCTime, Bool, Bool)))
 getQueuesDetails =
@@ -96,40 +90,6 @@ readMessages =
   where
     sql = "select " <> columnsMessage <> " from pgmq.read($1,$2,$3)"
 
-readGroupedMessages :: Statement (T.Text,Int32,Int32) (V.Vector (Int64, Int32, UTCTime, Maybe UTCTime, UTCTime, Value, Maybe Value))
-readGroupedMessages =
-  preparable sql readTupleEncoder tupleMessageDecoder
-  where
-    sql = "select " <> columnsMessage <> " from pgmq.read_grouped($1,$2,$3)"
-
-readGroupedHeadMessages :: Statement (T.Text,Int32,Int32) (V.Vector (Int64, Int32, UTCTime, Maybe UTCTime, UTCTime, Value, Maybe Value))
-readGroupedHeadMessages =
-  preparable sql readTupleEncoder tupleMessageDecoder
-  where
-    sql = "select "<> columnsMessage <> " from pgmq.read_grouped_head($1,$2,$3)"
-
-readGroupedMessagesWithPoll :: T.Text -> Int32 -> Int32 -> Maybe Int32 -> Maybe Int32 -> Statement () (V.Vector (Int64, Int32, UTCTime, Maybe UTCTime, UTCTime, Value, Maybe Value))
-readGroupedMessagesWithPoll q vt qty mmp mpi =
-  let mp = maybe 5 id mmp
-      pi = maybe 100 id mpi
-      snippet = "select " <> S.sql columnsMessage <> " from pgmq.read_grouped_with_poll(" <>
-                mconcat (L.intersperse "," [S.param q, S.param vt, S.param qty, S.param mp, S.param pi]) <> ")"
-  in S.toStatement snippet tupleMessageDecoder
-
-readGroupedRRMessages :: Statement (T.Text,Int32,Int32) (V.Vector (Int64, Int32, UTCTime, Maybe UTCTime, UTCTime, Value, Maybe Value))
-readGroupedRRMessages =
-  preparable sql readTupleEncoder tupleMessageDecoder
-  where
-    sql = "select " <> columnsMessage <> " from pgmq.read_grouped_rr($1,$2,$3)"
-
-readGroupedRRMessagesWithPoll :: T.Text -> Int32 -> Int32 -> Maybe Int32 -> Maybe Int32 -> Statement () (V.Vector (Int64, Int32, UTCTime, Maybe UTCTime, UTCTime, Value, Maybe Value))
-readGroupedRRMessagesWithPoll q vt qty mmp mpi =
-  let mp = maybe 5 id mmp
-      pi = maybe 100 id mpi
-      snippet = "select " <> S.sql columnsMessage <> " from pgmq.read_grouped_rr_with_poll(" <>
-                mconcat (L.intersperse "," [S.param q, S.param vt, S.param qty, S.param mp, S.param pi]) <> ")"
-  in S.toStatement snippet tupleMessageDecoder
-
 popMessages :: Statement (T.Text,Int32) (V.Vector (Int64, Int32, UTCTime, Maybe UTCTime, UTCTime, Value, Maybe Value))
 popMessages =
   preparable sql encoder tupleMessageDecoder
@@ -196,27 +156,27 @@ setMessagesVT q v s =
                 <> bigintArrayEncoder v <> "," <> S.param s <> ")"
   in S.toStatement snippet tupleMessageDecoder
 
-readTupleEncoder :: E.Params (T.Text, Int32, Int32)
-readTupleEncoder =
-  contrazip3
-    (E.param $ E.nonNullable E.text)
-    (E.param $ E.nonNullable E.int4)
-    (E.param $ E.nonNullable E.int4)
+-- readTupleEncoder :: E.Params (T.Text, Int32, Int32)
+-- readTupleEncoder =
+--   contrazip3
+--     (E.param $ E.nonNullable E.text)
+--     (E.param $ E.nonNullable E.int4)
+--     (E.param $ E.nonNullable E.int4)
 
-tupleMessageDecoder :: D.Result (V.Vector (Int64, Int32, UTCTime, Maybe UTCTime, UTCTime, Value, Maybe Value))
-tupleMessageDecoder =
-  D.rowVector $
-    (,,,,,,) <$>
-      D.column (D.nonNullable D.int8) <*>
-      D.column (D.nonNullable D.int4) <*>
-      D.column (D.nonNullable D.timestamptz) <*>
-      D.column (D.nullable D.timestamptz) <*>
-      D.column (D.nonNullable D.timestamptz) <*>
-      D.column (D.nonNullable D.jsonb) <*>
-      D.column (D.nullable D.jsonb)
+-- tupleMessageDecoder :: D.Result (V.Vector (Int64, Int32, UTCTime, Maybe UTCTime, UTCTime, Value, Maybe Value))
+-- tupleMessageDecoder =
+--   D.rowVector $
+--     (,,,,,,) <$>
+--       D.column (D.nonNullable D.int8) <*>
+--       D.column (D.nonNullable D.int4) <*>
+--       D.column (D.nonNullable D.timestamptz) <*>
+--       D.column (D.nullable D.timestamptz) <*>
+--       D.column (D.nonNullable D.timestamptz) <*>
+--       D.column (D.nonNullable D.jsonb) <*>
+--       D.column (D.nullable D.jsonb)
 
-columnsMessage :: T.Text
-columnsMessage = "msg_id,read_ct,enqueued_at,last_read_at,vt,message,headers"
+-- columnsMessage :: T.Text
+-- columnsMessage = "msg_id,read_ct,enqueued_at,last_read_at,vt,message,headers"
 
 columnsMetrics :: T.Text
 columnsMetrics = "queue_length,newest_msg_age_sec,oldest_msg_age_sec,total_messages,scrape_time,queue_visible_length"

@@ -40,6 +40,7 @@ module Database.PostgreSQL.Stakhanov
  , getIsUnlogged
 
  ) where
+
 import           Control.Monad
 import           Data.Aeson.Types
 import           Data.Int
