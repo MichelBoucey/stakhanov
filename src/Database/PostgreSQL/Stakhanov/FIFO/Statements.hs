@@ -24,7 +24,13 @@ readGroupedHeadMessages =
   where
     sql = "select "<> columnsMessage <> " from pgmq.read_grouped_head($1,$2,$3)"
 
-readGroupedMessagesWithPoll :: T.Text -> Int32 -> Int32 -> Maybe Int32 -> Maybe Int32 -> Statement () (V.Vector (Int64, Int32, UTCTime, Maybe UTCTime, UTCTime, Value, Maybe Value))
+readGroupedMessagesWithPoll
+  :: T.Text
+  -> Int32
+  -> Int32
+  -> Maybe Int32
+  -> Maybe Int32
+  -> Statement () (V.Vector (Int64, Int32, UTCTime, Maybe UTCTime, UTCTime, Value, Maybe Value))
 readGroupedMessagesWithPoll q vt qty mmp mpi =
   let mp = maybe 5 id mmp
       pi = maybe 100 id mpi
@@ -38,7 +44,13 @@ readGroupedRRMessages =
   where
     sql = "select " <> columnsMessage <> " from pgmq.read_grouped_rr($1,$2,$3)"
 
-readGroupedRRMessagesWithPoll :: T.Text -> Int32 -> Int32 -> Maybe Int32 -> Maybe Int32 -> Statement () (V.Vector (Int64, Int32, UTCTime, Maybe UTCTime, UTCTime, Value, Maybe Value))
+readGroupedRRMessagesWithPoll
+  :: T.Text
+  -> Int32
+  -> Int32
+  -> Maybe Int32
+  -> Maybe Int32
+  -> Statement () (V.Vector (Int64, Int32, UTCTime, Maybe UTCTime, UTCTime, Value, Maybe Value))
 readGroupedRRMessagesWithPoll q vt qty mmp mpi =
   let mp = maybe 5 id mmp
       pi = maybe 100 id mpi

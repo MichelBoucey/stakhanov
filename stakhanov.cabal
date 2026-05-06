@@ -37,6 +37,7 @@ library
   other-modules:
     Database.PostgreSQL.Stakhanov.Internal
     Database.PostgreSQL.Stakhanov.FIFO.Statements
+    Database.PostgreSQL.Stakhanov.Metrics.Statements
     Database.PostgreSQL.Stakhanov.Statements
 
   default-extensions:

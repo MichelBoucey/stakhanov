@@ -17,9 +17,9 @@ module Database.PostgreSQL.Stakhanov.Metrics
 
 import           Data.Int
 import           Data.Time
-import qualified Data.Vector                              as V
+import qualified Data.Vector                                      as V
 import           Database.PostgreSQL.Stakhanov.Internal
-import           Database.PostgreSQL.Stakhanov.Statements
+import           Database.PostgreSQL.Stakhanov.Metrics.Statements
 import           Database.PostgreSQL.Stakhanov.Types
 import           Hasql.Connection
 import           Hasql.Errors

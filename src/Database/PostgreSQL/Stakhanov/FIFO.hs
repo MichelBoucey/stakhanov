@@ -23,7 +23,6 @@ import           Hasql.Connection
 import           Hasql.Errors
 import           Hasql.Session
 
--- https://pgmq.github.io/pgmq/latest/api/sql/functions/#read_grouped
 readGrouped
   :: Queue
   -> VT
@@ -32,7 +31,6 @@ readGrouped
 readGrouped Queue{..} v q =
   use (unHasqlConn qPGConn) (statement (qName,v,q) readGroupedMessages) >>= pureMap maybeMessages
 
--- https://pgmq.github.io/pgmq/latest/api/sql/functions/#read_grouped_with_poll
 readGroupedWithPoll
   :: Queue              -- ^ The queue to work with
   -> VT                 -- ^ The Visibility Timeout : the time in seconds that message(s) become invisible after reading
@@ -43,7 +41,6 @@ readGroupedWithPoll
 readGroupedWithPoll Queue{..} v q mmp mpi =
   use (unHasqlConn qPGConn) (statement () $ readGroupedMessagesWithPoll qName v q mmp mpi) >>= pureMap maybeMessages
 
--- https://pgmq.github.io/pgmq/latest/api/sql/functions/#read_grouped_rr
 readGroupedRR
  :: Queue
  -> VT
@@ -52,7 +49,6 @@ readGroupedRR
 readGroupedRR Queue{..} v q =
   use (unHasqlConn qPGConn) (statement (qName,v,q) readGroupedRRMessages) >>= pureMap maybeMessages
 
--- pgmq.read_grouped_rr_with_poll(queue_name, vt, qty, max_poll_seconds, poll_interval_ms)
 readGroupedRRWithPoll
   :: Queue              -- ^ The queue to work with
   -> VT                 -- ^ The Visibility Timeout : the time in seconds that message(s) become invisible after reading
@@ -63,7 +59,6 @@ readGroupedRRWithPoll
 readGroupedRRWithPoll Queue{..} v q mmp mpi =
   use (unHasqlConn qPGConn) (statement () $ readGroupedRRMessagesWithPoll qName v q mmp mpi) >>= pureMap maybeMessages
 
--- https://pgmq.github.io/pgmq/latest/fifo-queues/#pgmqread_grouped_headqueue_name-vt-qty
 readGroupedHead
   :: Queue -- ^ The queue to work with
   -> VT    -- ^ Visibility timeout in seconds applied to each returned message
@@ -72,12 +67,10 @@ readGroupedHead
 readGroupedHead Queue{..} v q =
   use (unHasqlConn qPGConn) (statement (qName,v,q) readGroupedHeadMessages) >>= pureMap maybeMessages
 
--- https://pgmq.github.io/pgmq/latest/api/sql/functions/#create_fifo_index
 createFIFOIndex :: Queue -> IO (Either SessionError ())
 createFIFOIndex Queue{..} =
   use (unHasqlConn qPGConn) (statement qName createFIFOIndexQueue)
 
--- https://pgmq.github.io/pgmq/latest/api/sql/functions/#create_fifo_indexes_all
 createFIFOIndexesAll :: Connection -> IO (Either SessionError ())
 createFIFOIndexesAll c = use c (statement () createFIFOIndexesAllQueues)
 

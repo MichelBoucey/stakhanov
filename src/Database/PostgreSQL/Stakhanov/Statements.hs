@@ -1,6 +1,6 @@
 module Database.PostgreSQL.Stakhanov.Statements where
 
-import           Contravariant.Extras.Contrazip         (contrazip2) -- (contrazip2, contrazip3)
+import           Contravariant.Extras.Contrazip         (contrazip2)
 import           Data.Aeson
 import           Data.Int
 import qualified Data.List                              as L
@@ -155,28 +155,6 @@ setMessagesVT q v s =
   let snippet = "select * from pgmq.set_vt(" <> S.param q <> ","
                 <> bigintArrayEncoder v <> "," <> S.param s <> ")"
   in S.toStatement snippet tupleMessageDecoder
-
--- readTupleEncoder :: E.Params (T.Text, Int32, Int32)
--- readTupleEncoder =
---   contrazip3
---     (E.param $ E.nonNullable E.text)
---     (E.param $ E.nonNullable E.int4)
---     (E.param $ E.nonNullable E.int4)
-
--- tupleMessageDecoder :: D.Result (V.Vector (Int64, Int32, UTCTime, Maybe UTCTime, UTCTime, Value, Maybe Value))
--- tupleMessageDecoder =
---   D.rowVector $
---     (,,,,,,) <$>
---       D.column (D.nonNullable D.int8) <*>
---       D.column (D.nonNullable D.int4) <*>
---       D.column (D.nonNullable D.timestamptz) <*>
---       D.column (D.nullable D.timestamptz) <*>
---       D.column (D.nonNullable D.timestamptz) <*>
---       D.column (D.nonNullable D.jsonb) <*>
---       D.column (D.nullable D.jsonb)
-
--- columnsMessage :: T.Text
--- columnsMessage = "msg_id,read_ct,enqueued_at,last_read_at,vt,message,headers"
 
 columnsMetrics :: T.Text
 columnsMetrics = "queue_length,newest_msg_age_sec,oldest_msg_age_sec,total_messages,scrape_time,queue_visible_length"
