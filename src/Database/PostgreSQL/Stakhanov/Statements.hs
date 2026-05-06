@@ -102,6 +102,12 @@ readGroupedMessages =
   where
     sql = "select " <> columnsMessage <> " from pgmq.read_grouped($1,$2,$3)"
 
+readGroupedHeadMessages :: Statement (T.Text,Int32,Int32) (V.Vector (Int64, Int32, UTCTime, Maybe UTCTime, UTCTime, Value, Maybe Value))
+readGroupedHeadMessages =
+  preparable sql readTupleEncoder tupleMessageDecoder
+  where
+    sql = "select "<> columnsMessage <> " from pgmq.read_grouped_head($1,$2,$3)"
+
 readGroupedMessagesWithPoll :: T.Text -> Int32 -> Int32 -> Maybe Int32 -> Maybe Int32 -> Statement () (V.Vector (Int64, Int32, UTCTime, Maybe UTCTime, UTCTime, Value, Maybe Value))
 readGroupedMessagesWithPoll q vt qty mmp mpi =
   let mp = maybe 5 id mmp

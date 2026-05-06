@@ -65,11 +65,12 @@ readGroupedRRWithPoll Queue{..} v q mmp mpi =
 
 -- https://pgmq.github.io/pgmq/latest/fifo-queues/#pgmqread_grouped_headqueue_name-vt-qty
 readGroupedHead
-  :: Queue
-  -> VT
-  -> Qty
+  :: Queue -- ^ The queue to work with
+  -> VT    -- ^ Visibility timeout in seconds applied to each returned message
+  -> Qty   -- ^ Maximum number of groups (and therefore messages) to return
   -> IO (Either SessionError (Maybe Messages))
-readGroupedHead = undefined
+readGroupedHead Queue{..} v q =
+  use (unHasqlConn qPGConn) (statement (qName,v,q) readGroupedHeadMessages) >>= pureMap maybeMessages
 
 -- https://pgmq.github.io/pgmq/latest/api/sql/functions/#create_fifo_index
 createFIFOIndex :: Queue -> IO (Either SessionError ())
