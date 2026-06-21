@@ -4,13 +4,14 @@
 import           Data.Aeson
 import qualified Data.Aeson.KeyMap                        as K
 import           Data.Int
-import qualified Data.Vector                              as V hiding(MapM,forM)
+import           Data.Traversable
+import qualified Data.Vector                              as V hiding (forM)
 import qualified Database.PostgreSQL.Stakhanov            as S
 import           Database.PostgreSQL.Stakhanov.Connection
+import           Database.PostgreSQL.Stakhanov.FIFO
 import           Database.PostgreSQL.Stakhanov.Metrics
 import           Database.PostgreSQL.Stakhanov.Types
 import           Test.Hspec
-import           Data.Traversable
 
 main :: IO ()
 main = hspec $ do
@@ -176,7 +177,8 @@ main = hspec $ do
       it "Return the IDs of messages created" $ do
         Right c <- acquireLocalPGConn
         let q = S.declare "HspecFIFOTestQueue" c
-        forM [1,2,3,4,5,6,7,8,9,10] (\n -> S.batchSend' q (V.fromList [Object (K.fromList [("order", Number n)])]) (Just $ V.fromList [Object (K.fromList [("x-pgmq-group", String "A")])]) Nothing)
+        forM [1,2,3,4,5,6,7,8,9,10]
+              (\n -> S.batchSend' q (V.fromList [Object (K.fromList [("order", Number n)])]) (Just $ V.fromList [Object (K.fromList [("x-pgmq-group", String "A")])]) Nothing)
         `shouldReturn`
         [Right (V.fromList [1]),Right (V.fromList [2]), Right (V.fromList [3]),Right (V.fromList [4]),Right (V.fromList [5]),
          Right (V.fromList [6]),Right (V.fromList [7]),Right (V.fromList [8]),Right (V.fromList [9]),Right (V.fromList [10])]
@@ -185,7 +187,8 @@ main = hspec $ do
       it "Return the IDs of messages created" $ do
         Right c <- acquireLocalPGConn
         let q = S.declare "HspecFIFOTestQueue" c
-        forM [11,12,13,14,15,16,17,18,19,20] (\n -> S.batchSend' q (V.fromList [Object (K.fromList [("order", Number n)])]) (Just $ V.fromList [Object (K.fromList [("x-pgmq-group", String "B")])]) Nothing)
+        forM [11,12,13,14,15,16,17,18,19,20]
+             (\n -> S.batchSend' q (V.fromList [Object (K.fromList [("order", Number n)])]) (Just $ V.fromList [Object (K.fromList [("x-pgmq-group", String "B")])]) Nothing)
         `shouldReturn`
         [Right (V.fromList [11]),Right (V.fromList [12]), Right (V.fromList [13]),Right (V.fromList [14]),Right (V.fromList [15]),
          Right (V.fromList [16]),Right (V.fromList [17]),Right (V.fromList [18]),Right (V.fromList [19]),Right (V.fromList [20])]
@@ -194,10 +197,18 @@ main = hspec $ do
       it "Return the IDs of messages created" $ do
         Right c <- acquireLocalPGConn
         let q = S.declare "HspecFIFOTestQueue" c
-        forM [21,22,23,24,25,26,27,28,29,30] (\n -> S.batchSend' q (V.fromList [Object (K.fromList [("order", Number n)])]) (Just $ V.fromList [Object (K.fromList [("x-pgmq-group", String "C")])]) Nothing)
+        forM [21,22,23,24,25,26,27,28,29,30]
+              (\n -> S.batchSend' q (V.fromList [Object (K.fromList [("order", Number n)])]) (Just $ V.fromList [Object (K.fromList [("x-pgmq-group", String "C")])]) Nothing)
         `shouldReturn`
         [Right (V.fromList [21]),Right (V.fromList [22]), Right (V.fromList [23]),Right (V.fromList [24]),Right (V.fromList [25]),
          Right (V.fromList [26]),Right (V.fromList [27]),Right (V.fromList [28]),Right (V.fromList [29]),Right (V.fromList [30])]
+
+  describe "Read messages with readGroupedRR" $
+      it "May return messages" $ do
+        Right c <- acquireLocalPGConn
+        let q = S.declare "HspecFIFOTestQueue" c
+        Right vm <- readGroupedRR q 10 5
+        vm `shouldBe` (vm::Maybe Messages)
 
   describe "Drop HspecFIFOTestQueue" $
       it "Return True" $ do

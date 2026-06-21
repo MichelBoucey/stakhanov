@@ -65,6 +65,7 @@ test-suite stakhanov
     , aeson      >=2.2.3  && <2.4
     , base       >=4.8    && <5
     , hspec      >=2.11   && <3
+    , hspec-api  >=2.11   && <3
     , stakhanov
     , vector     >=0.12.2 && <0.14
 
