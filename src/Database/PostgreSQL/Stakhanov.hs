@@ -40,11 +40,12 @@ module Database.PostgreSQL.Stakhanov
  , getIsUnlogged
 
  ) where
+
 import           Control.Monad
 import           Data.Aeson.Types
 import           Data.Int
 import           Data.Maybe
-import           Data.Text                                as T hiding (drop)
+import qualified Data.Text                                as T hiding (drop)
 import           Data.Time
 import qualified Data.Vector                              as V
 import           Database.PostgreSQL.Stakhanov.Internal

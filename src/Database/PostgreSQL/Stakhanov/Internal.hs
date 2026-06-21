@@ -1,5 +1,6 @@
 module Database.PostgreSQL.Stakhanov.Internal where
 
+import           Contravariant.Extras.Contrazip      (contrazip3)
 import           Data.Aeson.Types
 import           Data.Int
 import           Data.List                           (intersperse)
@@ -9,6 +10,7 @@ import           Data.Time
 import           Data.Vector                         as V
 import           Database.PostgreSQL.Stakhanov.Types
 import qualified Hasql.Connection                    as C
+import qualified Hasql.Decoders                      as D
 import qualified Hasql.DynamicStatements.Snippet     as S
 import qualified Hasql.Encoders                      as E
 
@@ -77,6 +79,25 @@ tupleToMessage (e1,e2,e3,e4,e5,e6,e7) =
     , message           = e6
     , headers           = e7 }
 
+readTupleEncoder :: E.Params (T.Text, Int32, Int32)
+readTupleEncoder =
+  contrazip3
+    (E.param $ E.nonNullable E.text)
+    (E.param $ E.nonNullable E.int4)
+    (E.param $ E.nonNullable E.int4)
+
+tupleMessageDecoder :: D.Result (V.Vector (Int64, Int32, UTCTime, Maybe UTCTime, UTCTime, Value, Maybe Value))
+tupleMessageDecoder =
+  D.rowVector $
+    (,,,,,,) <$>
+      D.column (D.nonNullable D.int8) <*>
+      D.column (D.nonNullable D.int4) <*>
+      D.column (D.nonNullable D.timestamptz) <*>
+      D.column (D.nullable D.timestamptz) <*>
+      D.column (D.nonNullable D.timestamptz) <*>
+      D.column (D.nonNullable D.jsonb) <*>
+      D.column (D.nullable D.jsonb)
+
 maybeHeaders :: Maybe Value -> S.Snippet
 maybeHeaders (Just v) = "," <> S.encoderAndParam (E.nonNullable E.json) v <> "::jsonb"
 maybeHeaders Nothing  = mempty
@@ -93,4 +114,7 @@ jsonbArrayEncoder v =
 bigintArrayEncoder :: V.Vector Int64 -> S.Snippet
 bigintArrayEncoder v =
   "ARRAY[" <> M.mconcat (intersperse (S.sql ",") $ V.toList $ S.encoderAndParam (E.nonNullable E.int8) <$> v) <> "]::bigint[]"
+
+columnsMessage :: T.Text
+columnsMessage = "msg_id,read_ct,enqueued_at,last_read_at,vt,message,headers"
 
