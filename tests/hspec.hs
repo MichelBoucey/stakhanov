@@ -210,6 +210,45 @@ main = hspec $ do
         Right vm <- readGroupedRR q 10 5
         vm `shouldBe` (vm::Maybe Messages)
 
+  describe "Read messages with readGrouped" $
+      it "May return messages" $ do
+        Right c <- acquireLocalPGConn
+        let q = S.declare "HspecFIFOTestQueue" c
+        Right vm <- readGrouped q 10 5
+        vm `shouldBe` (vm::Maybe Messages)
+
+  describe "Read messages with readGroupedWithPoll" $
+      it "May return messages" $ do
+        Right c <- acquireLocalPGConn
+        let q = S.declare "HspecFIFOTestQueue" c
+        Right vm <- readGroupedWithPoll q 10 5 Nothing Nothing
+        vm `shouldBe` (vm::Maybe Messages)
+
+  describe "Read messages with readGroupedRRWithPoll" $
+      it "May return messages" $ do
+        Right c <- acquireLocalPGConn
+        let q = S.declare "HspecFIFOTestQueue" c
+        Right vm <- readGroupedRRWithPoll q 10 5 Nothing Nothing
+        vm `shouldBe` (vm::Maybe Messages)
+
+  describe "Read messages with readGroupedHead" $
+      it "May return messages" $ do
+        Right c <- acquireLocalPGConn
+        let q = S.declare "HspecFIFOTestQueue" c
+        Right vm <- readGroupedHead q 10 5
+        vm `shouldBe` (vm::Maybe Messages)
+
+  describe "Create a FIFO index" $
+      it "Return Right ()" $ do
+        Right c <- acquireLocalPGConn
+        let q = S.declare "HspecFIFOTestQueue" c
+        createFIFOIndex q `shouldReturn` Right ()
+
+  describe "Create all FIFO indexes" $
+      it "Return Right ()" $ do
+        Right c <- acquireLocalPGConn
+        createFIFOIndexesAll c `shouldReturn` Right ()
+
   describe "Drop HspecFIFOTestQueue" $
       it "Return True" $ do
         Right c <- acquireLocalPGConn
